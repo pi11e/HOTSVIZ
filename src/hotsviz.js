@@ -28,7 +28,7 @@ const heatMap =
 };
 
 
-
+/* PSEUDOCODE
 function generateHeatMapDataset()
 {
   //imagine a two-dimensional datastructure (eg matrix) where the keys are a pair of hero_map combination and the value is the winrate
@@ -52,7 +52,7 @@ function generateHeatMapDataset()
         }
 
   });
-}
+}*/
 
 function hasWinrateForHeroOnMap(hero,map)
 {
@@ -131,7 +131,7 @@ function setWinrateForHeroOnMap(hero,map,winrate)
     //  currentWinsOfHeroOnMap++;
     //  mapPerformanceForHero.set(gameHero).set(gameMap, currentWinsOfHeroOnMap)
 
-    const winsPerHero = heroWins.get(uniqueGame.game_hero);
+    var winsPerHero = heroWins.get(uniqueGame.game_hero);
 
 
     // increase total games
