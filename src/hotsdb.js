@@ -1,17 +1,13 @@
 //https://www.w3schools.com/nodejs/nodejs_mysql.asp
-//import * as mysql from 'mysql';
 import * as mysql from 'mysql';
 import * as fs from 'fs';
 import * as path from 'path';
 
-//var username = "root";
-//var password = "123456789";
 var username = "root";
 var password = "123456789";
 
 var uniqueGamesJSON = [];
 
-/*
 //TODO - use connection pool when running out of connections which happens as soon as you compile due to 500 connections being opened
 //var persistentConnection = undefined;
 
@@ -33,7 +29,7 @@ function queryDatabase(query)
 
     con.connect(function(err) {
         if (err) throw err;
-        //console.log("Connected!");
+        console.log("Connected!");
         con.query(query, function (err, result) 
         {
             console.log("executing on 'games' database: " + query);
@@ -44,7 +40,7 @@ function queryDatabase(query)
         });
       });
 }
-*/
+
 
 function createRowFromJSON(obj)
 {
@@ -52,19 +48,35 @@ function createRowFromJSON(obj)
   
   var winner = undefined;
   var hero = undefined;
-  
+  var simplifiedPlayers = [];  
 
   // loop over all players
   Array.from(obj.Players).forEach(player => 
-    {
+  {
       // determine if the replay owner was the winner of this match and store their hero name as well
       if(obj.ReplayOwner == player.PlayerToonId)
       {
-        console.log("Replay owner is " + player.PlayerToonId);
+        //console.log("Replay owner is " + player.PlayerToonId);
           winner = player.IsWinner;
           hero = player.PlayerHero.HeroName;
       }
-    });
+      simplifiedPlayers.push({
+        name : player.Name,
+        battleTag : player.BattleTagName,
+        toonId : player.PlayerToonId,
+        heroPlayed : player.PlayerHero.HeroName,
+        team : player.Team,
+        isWinner : player.IsWinner,
+        isReplayOwner : (player.PlayerToonId == obj.ReplayOwner),
+        accountLevel : player.AccountLevel,
+        party : player.PartyValue,
+        talents : player.HeroTalents,
+        scoreEvents : undefined // if desired in the future, add properties contained in "player.ScoreResult" here
+      });
+
+  });
+
+    
 
   const replay = {
     game_id : obj.RandomValue,
@@ -73,12 +85,12 @@ function createRowFromJSON(obj)
     game_mode : obj.GameMode,
     game_hero : hero,
     game_map : obj.MapInfo.MapName,
-    game_players : obj.Players
+    game_players : simplifiedPlayers
   }
 
   // use mysql model:
-  //var insertThis = "INSERT INTO uniqueGames VALUES ("+replay.game_id+", '" + replay.game_timestamp + "', " + replay.game_winner +", '"+replay.game_mode+"', '"+replay.game_hero+"', '"+replay.game_map+"');";
-  //queryDatabase(insertThis);
+  var insertThis = "INSERT INTO uniqueGames VALUES ("+replay.game_id+", '" + replay.game_timestamp + "', " + replay.game_winner +", '"+replay.game_mode+"', '"+replay.game_hero+"', '"+replay.game_map+"', '"+replay.simplifiedPlayers+"');";
+  queryDatabase(insertThis);
 
   // use runtime JSON model:
   uniqueGamesJSON.push(replay);
