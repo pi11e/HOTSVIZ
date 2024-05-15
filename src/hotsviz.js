@@ -236,7 +236,51 @@ function setWinrateForHeroOnMap(hero,map,winrate)
 //this registers the MatrixController and MatrixElement plugins
 Chart.register(MatrixController, MatrixElement);
 
+/*
+Usage:
+https://chartjs-chart-matrix.pages.dev/usage.html
+
+Tree data should be provided in tree property of dataset. 
+data is then automatically build. 
+key defines the key name in data objects to use for value. 
+groups array can be provided to display multiple levels of hierarchy. 
+Data is summarized to groups internally.
+
+example for providing tree instead of data:
+
+const data = [
+  {category: 'main', value: 1},
+  {category: 'main', value: 2},
+  {category: 'main', value: 3},
+  {category: 'other', value: 4},
+  {category: 'other', value: 5},
+];
+
+config = {
+  ...
+  data: {
+    datasets: [{
+      ...
+      tree : data,
+      ...
+    }]
+  }
+}
+*/
+
+
 const heatmapdata = [{x: 1, y: 1}, {x: 2, y: 1}, {x: 1, y: 2}, {x: 2, y: 2}] // replace with proper dataset from DB or JSON file
+
+// @TODO try providing data via the tree propery - for some reason this doesn't seem to work
+/*
+const heatmapdata = [
+  {category: 'main', value: 1},
+  {category: 'main', value: 2},
+  {category: 'main', value: 3},
+  {category: 'other', value: 4},
+  {category: 'other', value: 5},
+];
+*/
 
 const config = {
     type: 'matrix',
@@ -244,6 +288,7 @@ const config = {
       datasets: [{
         label: 'Winrate per hero per map',
         data: heatmapdata,
+        //tree : heatmapdata, // for some reason this doesn't seem to work - @TODO
         borderWidth: 1,
         borderColor: 'rgba(0,0,0,0.5)',
         backgroundColor: 'rgba(0,128,128,0.3)',
