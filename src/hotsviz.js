@@ -246,73 +246,96 @@ key defines the key name in data objects to use for value.
 groups array can be provided to display multiple levels of hierarchy. 
 Data is summarized to groups internally.
 
+Samples:
+https://github.com/kurkle/chartjs-chart-matrix/tree/main/docs/samples
+
 example for providing tree instead of data:
 
-const data = [
-  {category: 'main', value: 1},
-  {category: 'main', value: 2},
-  {category: 'main', value: 3},
-  {category: 'other', value: 4},
-  {category: 'other', value: 5},
-];
-
-config = {
-  ...
-  data: {
-    datasets: [{
-      ...
-      tree : data,
-      ...
-    }]
-  }
-}
 */
 
+var tealColor = 'rgba(0,128,128,0.3)';
+  
 
-const heatmapdata = [{x: 1, y: 1}, {x: 2, y: 1}, {x: 1, y: 2}, {x: 2, y: 2}] // replace with proper dataset from DB or JSON file
-
-// @TODO try providing data via the tree propery - for some reason this doesn't seem to work
-/*
-const heatmapdata = [
-  {category: 'main', value: 1},
-  {category: 'main', value: 2},
-  {category: 'main', value: 3},
-  {category: 'other', value: 4},
-  {category: 'other', value: 5},
-];
-*/
-
-const config = {
-    type: 'matrix',
-    data: {
-      datasets: [{
-        label: 'Winrate per hero per map',
-        data: heatmapdata,
-        //tree : heatmapdata, // for some reason this doesn't seem to work - @TODO
-        borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.5)',
-        backgroundColor: 'rgba(0,128,128,0.3)',
-        width: ({chart}) => (chart.chartArea || {}).width / 2 - 1,
-        height: ({chart}) => (chart.chartArea || {}).height / 2 - 1,
-      }],
+// <block:data:1>
+const data = {
+  datasets: [{
+    label: 'My Matrix',
+    data: [
+      {x: 'A', y: 'X', v: 11},
+      {x: 'A', y: 'Y', v: 12},
+      {x: 'A', y: 'Z', v: 13},
+      {x: 'B', y: 'X', v: 21},
+      {x: 'B', y: 'Y', v: 22},
+      {x: 'B', y: 'Z', v: 23},
+      {x: 'C', y: 'X', v: 31},
+      {x: 'C', y: 'Y', v: 32},
+      {x: 'C', y: 'Z', v: 33}
+    ],
+    backgroundColor(context) {
+      const value = context.dataset.data[context.dataIndex].v;
+      const alpha = (value - 5) / 40;
+      return tealColor;
     },
-    options: {
-      scales: {
-        x: {
-          display: false,
-          min: 0.5,
-          max: 2.5,
-          offset: false
+    borderColor(context) {
+      const value = context.dataset.data[context.dataIndex].v;
+      const alpha = (value - 5) / 40;
+      return tealColor;
+    },
+    borderWidth: 1,
+    width: ({chart}) => (chart.chartArea || {}).width / 3 - 1,
+    height: ({chart}) =>(chart.chartArea || {}).height / 3 - 1
+  }]
+};
+// </block:data>
+
+
+// <block:config:0>
+const config = {
+  type: 'matrix',
+  data: data,
+  options: {
+    plugins: {
+      legend: false,
+      tooltip: {
+        callbacks: {
+          title() {
+            return '';
+          },
+          label(context) {
+            const v = context.dataset.data[context.dataIndex];
+            return ['x: ' + v.x, 'y: ' + v.y, 'v: ' + v.v];
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: 'category',
+        labels: ['A', 'B', 'C'],
+        ticks: {
+          display: true
         },
-        y: {
-          display: false,
-          min: 0.5,
-          max: 2.5
+        grid: {
+          display: false
+        }
+      },
+      y: {
+        type: 'category',
+        labels: ['X', 'Y', 'Z'],
+        offset: true,
+        ticks: {
+          display: true
+        },
+        grid: {
+          display: false
         }
       }
     }
-  };
-  
+  }
+};
+
+// </block:config>
+
   new Chart(
     document.getElementById('heatmap'),
     config
