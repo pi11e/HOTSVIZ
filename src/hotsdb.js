@@ -1,14 +1,21 @@
 //https://www.w3schools.com/nodejs/nodejs_mysql.asp
 //import * as mysql from 'mysql';
+import * as mysql from 'mysql';
 import * as fs from 'fs';
 import * as path from 'path';
 
 //var username = "root";
 //var password = "123456789";
+var username = "root";
+var password = "123456789";
 
 var uniqueGamesJSON = [];
 
 /*
+//TODO - use connection pool when running out of connections which happens as soon as you compile due to 500 connections being opened
+//var persistentConnection = undefined;
+
+
 function createConnection(){
     var con = mysql.createConnection({
         host: "localhost",
