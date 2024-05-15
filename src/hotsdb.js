@@ -138,7 +138,7 @@ async function createRowFromJSON(obj)
           }
           
           replay.game_winner = player.IsWinner.toString();
-
+          replay.game_hero = sanitizedHeroName;
           
       }
 
@@ -192,6 +192,13 @@ function populateDatabase(files)
     return uniqueGamesJSON;
 }
 
+function serializeJSON(jsonData, filename)
+{
+  // filename expects something like 'abc.json'
+  const filepath = './data/'+filename;
+  fs.writeFileSync(filepath, JSON.stringify(jsonData));
+}
+
 
 //PROGRAM EXECUTION BELOW
 
@@ -224,5 +231,10 @@ queryDatabase("DELETE FROM uniqueGames");
 populateDatabase(replays);
 
 
-// rebuild gameData.json based on the blob of all joined unique games as json
+// rebuild gameData.json based on the blob of all joined unique games as json - not needed if we're building data based on the SQL database
 //fs.writeFileSync('./data/gameData.json', JSON.stringify(uniqueGamesJSON));
+
+// @TODO:
+// create datasets for the various visualizations
+// serialize them as JSON
+// load them in the visualization module
