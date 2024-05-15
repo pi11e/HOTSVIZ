@@ -4,6 +4,10 @@ import * as fs from'fs';
 import * as mysql from 'mysql';
 import * as util from 'util';
 
+import Chart from 'chart.js/auto';
+import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
+
+
 /*
 function accumulateWinsForHeroOnMap(hero, map)
 {
@@ -20,12 +24,6 @@ function accumulateWinsForHeroOnMap(hero, map)
   });
 }*/
 
-const heatMap = 
-{
-  'Mura_Towers' : 0.5,
-  'Mura_Curse'  : 0.4,
-  'Tracer_Temple' : 0.7
-};
 
 
 /* PSEUDOCODE
@@ -54,6 +52,7 @@ function generateHeatMapDataset()
   });
 }*/
 
+/* DELETE THIS OR REWRITE THE VARIABLE NAME
 function hasWinrateForHeroOnMap(hero,map)
 {
   const key = `${x}_${y}`;
@@ -71,7 +70,7 @@ function setWinrateForHeroOnMap(hero,map,winrate)
   const key = `${x}_${y}`;
   heatMap.set(key, winrate);
 }
-
+*/
 (async function() 
 {
 
@@ -179,6 +178,8 @@ function setWinrateForHeroOnMap(hero,map,winrate)
   const totalGames = lossData.concat(winData).reduce((a,b)=>a+b);
   const winRate = Math.round(globalWins/totalGames*100)/100;
   //const totalGames = totalDefeats + totalWins;
+
+
   new Chart(
     document.getElementById('barchart'),
     {
@@ -231,5 +232,45 @@ function setWinrateForHeroOnMap(hero,map,winrate)
         }
 
 });
+
+//this registers the MatrixController and MatrixElement plugins
+Chart.register(MatrixController, MatrixElement);
+
+const heatmapdata = [{x: 1, y: 1}, {x: 2, y: 1}, {x: 1, y: 2}, {x: 2, y: 2}] // replace with proper dataset from DB or JSON file
+
+const config = {
+    type: 'matrix',
+    data: {
+      datasets: [{
+        label: 'Winrate per hero per map',
+        data: heatmapdata,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0,128,128,0.3)',
+        width: ({chart}) => (chart.chartArea || {}).width / 2 - 1,
+        height: ({chart}) => (chart.chartArea || {}).height / 2 - 1,
+      }],
+    },
+    options: {
+      scales: {
+        x: {
+          display: false,
+          min: 0.5,
+          max: 2.5,
+          offset: false
+        },
+        y: {
+          display: false,
+          min: 0.5,
+          max: 2.5
+        }
+      }
+    }
+  };
+  
+  new Chart(
+    document.getElementById('heatmap'),
+    config
+  )
 
 })();
