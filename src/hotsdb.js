@@ -9,12 +9,13 @@ var password = "123456789";
 
 var uniqueGamesJSON = [];
 
-var globalPool = undefined;
+var _globalPool = undefined;
 
 //TODO - use connection pool when running out of connections which happens as soon as you compile due to 500 connections being opened
 //var persistentConnection = undefined;
 
 
+/* 
 function createConnection(){
     var con =  mysql.createConnection({
         host: "localhost",
@@ -26,30 +27,64 @@ function createConnection(){
     
     return con;
 }
+ */
+function openConnection(){
+  
+  if(_globalPool == undefined)
+    {
+      _globalPool = mysql.createPool({
+        host: "localhost",
+        user: username,
+        password: password,
+        database: "games"
+      });
+    }
+  
+  
+  
+  return _globalPool;
+}
+
 
 function handleResultset (err, result) {
   var i, len;
-  if (err) {
-      throw err;
+  if (err) 
+    {
+    if(err.code == 'ER_DATA_TOO_LONG')
+      {
+        console.log("ERROR: data exceeding max length")
+        
+      }
+      else{
+        throw err;
+      }
+      
   }
   len = result.length;
-  for (i = 0; i < len; i += 1) {
+  
+  console.log("query successful.");
+
+  /* for (i = 0; i < len; i += 1) 
+    {
       console.log(result[i]);
-  }
+  } */
 }
 
 async function queryDatabase(queryString)
 {
+  /* 
   var con =  mysql.createConnection({
     host: "localhost",
     user: username,
     password: password,
     database: "games"
-  });
+  }); */
+  let con = openConnection();
 
-  console.log("executing query: " + queryString);
+  await sleep(1000);
+  //console.log("executing query: " + queryString.slice(0,100) + " ...");
   con.query(queryString, handleResultset);
-  con.end();
+  
 
 }
 
@@ -65,7 +100,7 @@ async function createRowFromJSON(obj)
 
   
   var hero = undefined;
-  var simplifiedPlayers = [];  
+  var playerInfo = [];  
 
   const replay = {
     game_id : obj.RandomValue,
@@ -74,24 +109,44 @@ async function createRowFromJSON(obj)
     game_mode : obj.GameMode,
     game_hero : hero,
     game_map : obj.MapInfo.MapName,
-    game_players : simplifiedPlayers
+    game_players : playerInfo
+  }
+
+  //DEBUG
+  if(replay.game_map.includes("'"))
+  {
+    replay.game_map = obj.MapInfo.MapId;
   }
 
   // loop over all players
   Array.from(obj.Players).forEach(player => 
   {
+      var sanitizedHeroName = undefined;
+
       // determine if the replay owner was the winner of this match and store their hero name as well
       if(obj.ReplayOwner == player.PlayerToonId)
       {
         //console.log("Replay owner is " + player.PlayerToonId);
-          hero = player.PlayerHero.HeroName;
+        // sanitize hero names that contain ' because SQL doesn't like that
+        if(player.PlayerHero.HeroName.includes("'"))
+          {
+            sanitizedHeroName = player.PlayerHero.HeroId;
+          }
+          else
+          {
+            sanitizedHeroName = player.PlayerHero.HeroName;
+          }
+          
           replay.game_winner = player.IsWinner.toString();
+
+          
       }
-      simplifiedPlayers.push({
+
+      playerInfo.push({
         name : player.Name,
         battleTag : player.BattleTagName,
         toonId : player.PlayerToonId,
-        heroPlayed : player.PlayerHero.HeroName,
+        heroPlayed : sanitizedHeroName,
         team : player.Team,
         isWinner : player.IsWinner.toString(),
         isReplayOwner : (player.PlayerToonId == obj.ReplayOwner),
@@ -104,11 +159,10 @@ async function createRowFromJSON(obj)
   });
 
     
-
   
 
   // use mysql model:
-  var insertThis = "INSERT INTO uniqueGames VALUES ("+replay.game_id+", '" + replay.game_timestamp + "', " + replay.game_winner +", '"+replay.game_mode+"', '"+replay.game_hero+"', '"+replay.game_map+"', '"+replay.simplifiedPlayers+"');";
+  var insertThis = "INSERT INTO uniqueGames VALUES ("+replay.game_id+", '" + replay.game_timestamp + "', " + replay.game_winner +", '"+replay.game_mode+"', '"+replay.game_hero+"', '"+replay.game_map+"', '"+JSON.stringify(playerInfo).replaceAll("'","")+"');";
   queryDatabase(insertThis);
 
   // use runtime JSON model:
@@ -141,6 +195,21 @@ function populateDatabase(files)
 
 //PROGRAM EXECUTION BELOW
 
+// to recreate the entire table, execute the following queries:
+// DROP uniqueGames
+// and then
+/*
+CREATE TABLE uniqueGames (
+    game_id varchar(255),
+    game_timestamp varchar(255),
+    game_winner varchar(255),
+	game_mode varchar(255),
+    game_hero varchar(255),
+    game_map varchar(255),
+    game_players varchar(255)
+);
+
+*/
 
 // read config file to find the location of the replay json files
 var filePath = fs.readFileSync("./data/data_path.cfg", "utf-8");
@@ -148,7 +217,7 @@ var filePath = fs.readFileSync("./data/data_path.cfg", "utf-8");
 const replays = fs.readdirSync(filePath);
 
 // use this to purge all records from said table to start over
-//queryDatabase("DELETE FROM uniqueGames");
+queryDatabase("DELETE FROM uniqueGames");
 
 // use this to fill the uniqueGames table in the games database on localhost with
 // replay data stored as JSON files found in the folder specified in data_path.cfg
