@@ -1,76 +1,20 @@
+/*
+
+hotsvis.jz
+This script is responsible for creating charts on a given canvas element (specified in index.html) and assigning relevant
+options and data to them. 
+
+*/
+
 import Chart from 'chart.js/auto';
 import { create } from 'domain';
 import * as fs from'fs';
 import * as mysql from 'mysql';
 import * as util from 'util';
-
-import Chart from 'chart.js/auto';
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
 
+import * as hotsdata from './hotsdata.js'
 
-/*
-function accumulateWinsForHeroOnMap(hero, map)
-{
-  let heroes = getHeroes();
-  let maps = getMaps();
-  
-
-  heroes.forEach(hero => 
-    {
-      maps.forEach(map =>{
-        heatMap.increaseWinrateForHeroOnMap(hero, map);
-      });
-    
-  });
-}*/
-
-
-
-/* PSEUDOCODE
-function generateHeatMapDataset()
-{
-  //imagine a two-dimensional datastructure (eg matrix) where the keys are a pair of hero_map combination and the value is the winrate
-  // of that hero on that map as defined by # of wins divided by # of games.
-
-  var games = [];
-  var totalGames = games.length;
-  
-
-  //loop over every game (this is pseudocode for now)
-  games.forEach(game => 
-    {
-      var hero = game.hero;
-      var map = game.map;
-      var isWinner = game.winner;
-
-      if(isWinner)
-        {
-          // check if we already have a record for the hero,map vector - if so, update its winrate value. otherwise, initialise it.
-          if()
-        }
-
-  });
-}*/
-
-/* DELETE THIS OR REWRITE THE VARIABLE NAME
-function hasWinrateForHeroOnMap(hero,map)
-{
-  const key = `${x}_${y}`;
-  return heatMap.has(key);
-}
-
-function getWinrateForHeroOnMap(hero, map)
-{
-  const key = `${x}_${y}`;
-  return heatMap.get(key);
-}
-
-function setWinrateForHeroOnMap(hero,map,winrate)
-{
-  const key = `${x}_${y}`;
-  heatMap.set(key, winrate);
-}
-*/
 (async function() 
 {
 
@@ -254,23 +198,15 @@ example for providing tree instead of data:
 */
 
 var tealColor = 'rgba(0,128,128,0.3)';
-  
+
+// testing: get the data from hotsdata.js
+var heatmapData = hotsdata.generateDataForChartType("heatmap");
 
 // <block:data:1>
 const data = {
   datasets: [{
     label: 'My Matrix',
-    data: [
-      {x: 'A', y: 'X', v: 11},
-      {x: 'A', y: 'Y', v: 12},
-      {x: 'A', y: 'Z', v: 13},
-      {x: 'B', y: 'X', v: 21},
-      {x: 'B', y: 'Y', v: 22},
-      {x: 'B', y: 'Z', v: 23},
-      {x: 'C', y: 'X', v: 31},
-      {x: 'C', y: 'Y', v: 32},
-      {x: 'C', y: 'Z', v: 33}
-    ],
+    data: heatmapData,
     backgroundColor(context) {
       const value = context.dataset.data[context.dataIndex].v;
       const alpha = (value - 5) / 40;
@@ -340,5 +276,42 @@ const config = {
     document.getElementById('heatmap'),
     config
   )
+
+
+// Generate a line chart indicating winrate over time
+
+
+const labels = ["day1", "day2", "day3", "day4"]
+const lineChartData = {
+  labels: labels,
+  datasets: [
+    {
+      label: 'Dataset 1',
+      data: [0.54,0.60,0.51,0.42],
+      borderColor: tealColor,
+    }
+  ]
+};
+
+const lineChartConfig = {
+  type: 'line',
+  data: lineChartData,
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Chart.js Line Chart'
+      }
+    }
+  },
+};
+
+
+
+new Chart(document.getElementById('linechart'), lineChartConfig);
 
 })();
