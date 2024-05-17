@@ -28,8 +28,10 @@ export function generateDataForChartType(chartType)
             break;
         case "barchart":
             dataSet = generateBarChartDataSet();
+            break;
         case "linechart":
             dataSet = generateLineChartDataSet();
+            break;
         default:
             break;
     }
@@ -53,6 +55,7 @@ function generateBarChartDataSet()
 
     });
 
+    console.log(barChartData);
     return barChartData;
 }
 
@@ -73,15 +76,15 @@ function generatePieChartDataSet()
             pieChartData.data.push(element.total_games);
     });
 
-    console.log("Generated pie chart data set: " + pieChartData)
-
+    
+    console.log(pieChartData);
     return pieChartData;
 }
 
 function generateHeatmapDataSet()
 {
-    // serve and adjust the datasets here
-    return [
+    // SAMPLE DATA
+    var heatmapData = [
         {x: 'A', y: 'X', v: 11},
         {x: 'A', y: 'Y', v: 12},
         {x: 'A', y: 'Z', v: 13},
@@ -91,20 +94,32 @@ function generateHeatmapDataSet()
         {x: 'C', y: 'X', v: 40},
         {x: 'C', y: 'Y', v: 40},
         {x: 'C', y: 'Z', v: 40}
-      ]
+      ];
+    // serve and adjust the datasets here
+    
+    console.log(heatmapData);
+    return heatmapData;
 }
 
 function generateLineChartDataSet()
 {
-    return 
+    
+    // SAMPLE DATA
+    // line chart axis labels
+    const labels = ["day1", "day2", "day3", "day4"]
+
+    // line chart data
+    const lineChartData = {
+    labels: labels,
+    datasets: [
+    {
+      label: 'Dataset 1',
+      data: [0.54,0.60,0.51,0.42],
+      borderColor: 'rgba(0,128,128,0.3)',
+    }
+  ]
+};
+
+    console.log(lineChartData);
+    return lineChartData;
 }
-
-
-
-function main()
-{
-    generatePieChartDataSet();
-}
-
-
-//main();

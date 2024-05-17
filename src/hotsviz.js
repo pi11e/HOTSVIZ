@@ -26,16 +26,6 @@ import * as hotsdata from './hotsdata.js'
 
   // BEGIN BAR CHART
 
-  // lets build a new array that contains the map name and number of wins on it
-  const defeatPerMap = new Map(); // key = map, value = # of losses on that map
-  const winsPerMap = new Map(); // key = map, value = # of wins on that map
-  var globalWins = 0;
-
-  const heroWins = new Map(); // holds all hero names that appear in the dataset
-
-  const heroPerformanceForMap = new Map(); // keys are all the maps, value per hero is an object with hero name : wins on the map
-  const mapPerformanceForHero = new Map(); // keys are all the heroes, values is an object with map name : wins on the map
-
   
   
 
@@ -43,6 +33,7 @@ import * as hotsdata from './hotsdata.js'
   // we need a labels[] that contains all the map names
   // we need a wins[] and losses[] that contain the total wins / losses for the map
   let barChartData = hotsdata.generateDataForChartType("barchart");
+
   let lossData = barChartData.loss;
   let winData = barChartData.wins;
 
@@ -220,21 +211,7 @@ const config = {
 // END HEATMAP
 
 // BEGIN LINE CHART - indicating winrate over time
-
-// line chart axis labels
-const labels = ["day1", "day2", "day3", "day4"]
-
-// line chart data
-const lineChartData = {
-  labels: labels,
-  datasets: [
-    {
-      label: 'Dataset 1',
-      data: [0.54,0.60,0.51,0.42],
-      borderColor: tealColor,
-    }
-  ]
-};
+let lineChartData = hotsdata.generateDataForChartType('linechart');
 
 const lineChartConfig = {
   type: 'line',

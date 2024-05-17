@@ -14,8 +14,8 @@ var _globalPool = undefined;
 
 const queryForHeroStats = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_games DESC LIMIT 0, 1000";
 const queryForMapStats = "SELECT game_map, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_map ORDER BY game_map LIMIT 0, 1000";
-const queryForHeatmap = "";
-const queryForLineChart = "";
+const queryForHeatmap = "SELECT * from uniqueGames";
+const queryForLineChart = "SELECT * from uniqueGames";
 
 
 
@@ -111,6 +111,8 @@ function handleResultsetAndSerialize (err, result) {
   var filename = undefined;
   this.sql == queryForHeroStats ? filename = "queryForHeroStatsResult.json" : undefined;
   this.sql == queryForMapStats ? filename = "queryForMapStatsResult.json" : undefined;
+  this.sql == queryForHeatmap ? filename = "queryForHeatmapResult.json" : undefined;
+  this.sql == queryForLineChart ? filename = "queryForLineChartResult.json" : undefined;
 
   serializeQuery(result,filename);
   
