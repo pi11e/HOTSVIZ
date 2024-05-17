@@ -14,55 +14,14 @@ var _globalPool = undefined;
 
 const queryForHeroStats = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_games DESC LIMIT 0, 1000";
 const queryForMapStats = "SELECT game_map, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_map ORDER BY game_map LIMIT 0, 1000";
-//const queryForHeatmap = fs.readFileSync('./data/heatmapquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
+const queryForHeatmap = fs.readFileSync('./data/heatmapquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
 //const queryForLineChart = fs.readFileSync('./data/linechartquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
 const queryForLineChart = "SELECT game_timestamp from uniqueGames"; // this is just sample data, throw it away later
-const queryForHeatmap = "SELECT game_hero, game_map from uniqueGames"; // this is just sample data, throw it away later
-
-/*
-
-Here's the monster of a query for the heatmap.
-
--- Increase the group_concat_max_len limit to handle larger concatenated strings
-SET SESSION group_concat_max_len = 1000000;
-
--- Fetch the distinct maps that appear in stormLeague games
-SET @maps = (
-    SELECT GROUP_CONCAT(DISTINCT CONCAT('''', game_map, ''''))
-    FROM uniqueGames
-    WHERE game_mode = 'stormLeague'
-);
-
--- Fetch the distinct heroes and construct the dynamic SELECT clause
-SET @heroes = (
-    SELECT GROUP_CONCAT(
-        DISTINCT 
-        CONCAT(
-            'SUM(CASE WHEN game_hero = ''', game_hero, ''' THEN game_winner ELSE 0 END) / SUM(CASE WHEN game_hero = ''', game_hero, ''' THEN 1 ELSE 0 END) AS `', 
-            game_hero, '`'
-        )
-    ) 
-    FROM uniqueGames
-    WHERE game_mode = 'stormLeague'
-);
-
--- Construct the full query
-SET @sql = CONCAT(
-    'SELECT game_map, ', @heroes, 
-    ' FROM uniqueGames WHERE game_mode = ''stormLeague'' AND game_map IN (', @maps, ') GROUP BY game_map'
-);
-
--- Debug: Print the constructed query (optional)
-SELECT @sql;
-
--- Prepare and execute the dynamic statement
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+//const queryForHeatmap = "SELECT game_hero, game_map from uniqueGames"; // this is just sample data, throw it away later
 
 
 
-*/
+
 
 
 //TODO - use connection pool when running out of connections which happens as soon as you compile due to 500 connections being opened
@@ -379,12 +338,99 @@ function queryWinrateOverTime()
 function queryHeroPerformancePerMap()
 {
     // this is for the heatmap, data should look like this:
+  let pool = openConnection();
+    //queryDatabaseAndSerializeResult(queryForHeatmap);
+// Assuming you have a MySQL connection pool named `pool`
 
-    queryDatabaseAndSerializeResult(queryForHeatmap);
+// Step 1: Set session variable for group_concat_max_len
+const statement1 = "SET SESSION group_concat_max_len = 1000000";
+pool.query(statement1, (error, results) => {
+    if (error) throw error;
+    console.log("Statement 1 OK"); // Log successful execution of statement 1
+
+    // Step 2: Fetch distinct maps
+    const statement2 = `
+        SET @maps = (
+            SELECT GROUP_CONCAT(DISTINCT CONCAT('''', game_map, ''''))
+            FROM uniqueGames
+            WHERE game_mode = 'stormLeague'
+        )`;
+
+
+
+    pool.query(statement2, (error, results) => {
+        if (error) throw error;
+        console.log("Statement 2 OK"); // Log successful execution of statement 2
+
+        // Step 3: Fetch distinct heroes and construct dynamic SELECT clause
+        const statement3 = `
+            SET @heroes = (
+                SELECT GROUP_CONCAT(
+                    DISTINCT 
+                    CONCAT(
+                        'IFNULL(SUM(CASE WHEN game_hero = ''', REPLACE(game_hero, '''', ''''''), ''' THEN game_winner ELSE 0 END) / SUM(CASE WHEN game_hero = ''', REPLACE(game_hero, '''', ''''''), ''' THEN 1 ELSE 0 END), "N/A") AS \'', 
+                        game_hero, '\''
+                    )
+                ) 
+                FROM uniqueGames
+                WHERE game_mode = 'stormLeague'
+            )`;
+        pool.query(statement3, (error, results) => {
+            if (error) throw error;
+            console.log("Statement 3 OK"); // Log successful execution of statement 3
+
+            // Step 4: Construct the full query
+            const statement4 = `
+                SET @sql = CONCAT(
+                    'SELECT game_map, ', @heroes, 
+                    ' FROM uniqueGames WHERE game_mode = ''stormLeague'' AND game_map IN (', @maps, ') GROUP BY game_map'
+                )`;
+            pool.query(statement4, (error, results) => {
+                if (error) throw error;
+                console.log("Statement 4 OK"); // Log successful execution of statement 4
+                console.log("Constructed query:", results); // Debug: Print the constructed query
+
+                // Check if @sql is not NULL or empty
+                if (!results) {
+                    throw new Error("Failed to construct SQL statement.");
+                }
+
+                
+                
+                // Step 5: Prepare the dynamic statement
+              const statement5 = "PREPARE stmt FROM @sql";
+              pool.query(statement5, (error, results) => {
+                  if (error) throw error;
+                  console.log("Statement 5 OK"); // Log successful execution of statement 5
+
+                  // Step 6: Execute the prepared statement
+                  const executeStatement = "EXECUTE stmt";
+                  pool.query(executeStatement, (error, results) => {
+                      if (error) throw error;
+                      console.log("Statement 6 OK"); // Log successful execution of statement 6
+                      console.log(results); // Assuming you want to log the result
+
+                      // Step 7: Deallocate the prepared statement
+                      const deallocateStatement = "DEALLOCATE PREPARE stmt";
+                      pool.query(deallocateStatement, (error, results) => {
+                          if (error) throw error;
+                          console.log("Statement 7 OK"); // Log successful execution of statement 7
+                          console.log(results); // Assuming you want to log the result
+                      });
+                  });
+              });
+            });
+        });
+    });
+});
+
+
+
+
 }
 
 
 queryHeroWinrate(); // this should generate a queryForHeroStatsResponse.json that holds all heroes, their total wins, games and winrate using the queryForHeroStats query.
 queryMapWinrate(); // this should generate a queryForMapStatsResponse.json that holds all maps, their total wins, games and winrate using the queryForMapStats query.
 queryWinrateOverTime();
-queryHeroPerformancePerMap();
+//queryHeroPerformancePerMap();
