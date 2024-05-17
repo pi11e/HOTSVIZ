@@ -14,9 +14,55 @@ var _globalPool = undefined;
 
 const queryForHeroStats = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_games DESC LIMIT 0, 1000";
 const queryForMapStats = "SELECT game_map, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_map ORDER BY game_map LIMIT 0, 1000";
-const queryForHeatmap = "SELECT * from uniqueGames";
-const queryForLineChart = "SELECT * from uniqueGames";
+//const queryForHeatmap = fs.readFileSync('./data/heatmapquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
+//const queryForLineChart = fs.readFileSync('./data/linechartquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
+const queryForLineChart = "SELECT game_timestamp from uniqueGames"; // this is just sample data, throw it away later
+const queryForHeatmap = "SELECT game_hero, game_map from uniqueGames"; // this is just sample data, throw it away later
 
+/*
+
+Here's the monster of a query for the heatmap.
+
+-- Increase the group_concat_max_len limit to handle larger concatenated strings
+SET SESSION group_concat_max_len = 1000000;
+
+-- Fetch the distinct maps that appear in stormLeague games
+SET @maps = (
+    SELECT GROUP_CONCAT(DISTINCT CONCAT('''', game_map, ''''))
+    FROM uniqueGames
+    WHERE game_mode = 'stormLeague'
+);
+
+-- Fetch the distinct heroes and construct the dynamic SELECT clause
+SET @heroes = (
+    SELECT GROUP_CONCAT(
+        DISTINCT 
+        CONCAT(
+            'SUM(CASE WHEN game_hero = ''', game_hero, ''' THEN game_winner ELSE 0 END) / SUM(CASE WHEN game_hero = ''', game_hero, ''' THEN 1 ELSE 0 END) AS `', 
+            game_hero, '`'
+        )
+    ) 
+    FROM uniqueGames
+    WHERE game_mode = 'stormLeague'
+);
+
+-- Construct the full query
+SET @sql = CONCAT(
+    'SELECT game_map, ', @heroes, 
+    ' FROM uniqueGames WHERE game_mode = ''stormLeague'' AND game_map IN (', @maps, ') GROUP BY game_map'
+);
+
+-- Debug: Print the constructed query (optional)
+SELECT @sql;
+
+-- Prepare and execute the dynamic statement
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
+
+*/
 
 
 //TODO - use connection pool when running out of connections which happens as soon as you compile due to 500 connections being opened

@@ -83,6 +83,11 @@ function generatePieChartDataSet()
 
 function generateHeatmapDataSet()
 {
+    // REAL DATA:
+    var jsonResponse = JSON.parse(fs.readFileSync('./data/queryForHeatmapResult.json', 'utf-8'));
+
+    // @TODO: process the real data and return a useful dataset.
+
     // SAMPLE DATA
     var heatmapData = [
         {x: 'A', y: 'X', v: 11},
@@ -97,13 +102,17 @@ function generateHeatmapDataSet()
       ];
     // serve and adjust the datasets here
     
-    console.log(heatmapData);
+    console.log(jsonResponse);
     return heatmapData;
 }
 
 function generateLineChartDataSet()
 {
-    
+    // REAL DATA:
+    var jsonResponse = JSON.parse(fs.readFileSync('./data/queryForLineChartResult.json', 'utf-8'));
+
+    // @TODO: process the real data and return a useful dataset.
+
     // SAMPLE DATA
     // line chart axis labels
     const labels = ["day1", "day2", "day3", "day4"]
@@ -120,6 +129,6 @@ function generateLineChartDataSet()
   ]
 };
 
-    console.log(lineChartData);
+    console.log(jsonResponse);
     return lineChartData;
 }
