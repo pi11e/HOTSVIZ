@@ -28,6 +28,8 @@ export function generateDataForChartType(chartType)
             break;
         case "barchart":
             dataSet = generateBarChartDataSet();
+        case "linechart":
+            dataSet = generateLineChartDataSet();
         default:
             break;
     }
@@ -37,7 +39,21 @@ export function generateDataForChartType(chartType)
 
 function generateBarChartDataSet()
 {
-    return undefined;
+    var barChartData = { labels : [], wins : [], loss : []};
+
+    // read response
+    var jsonResponse = JSON.parse(fs.readFileSync('./data/queryForMapStatsResult.json', 'utf-8'));
+    Array.from(jsonResponse).forEach(element => 
+    {
+        barChartData.labels.push(element.game_map);
+        barChartData.wins.push(element.total_wins);
+
+        const total_loss = element.total_games - element.total_wins;
+        barChartData.loss.push(total_loss);
+
+    });
+
+    return barChartData;
 }
 
 function generatePieChartDataSet()
@@ -48,13 +64,13 @@ function generatePieChartDataSet()
     var pieChartData = { labels : [], data : []};
 
     // read response
-    var jsonResponse = JSON.parse(fs.readFileSync('./data/response.json', 'utf-8'));
+    var jsonResponse = JSON.parse(fs.readFileSync('./data/queryForHeroStatsResult.json', 'utf-8'));
     Array.from(jsonResponse).forEach(element => 
         {
             
             pieChartData.labels.push(element.game_hero);
             
-            pieChartData.data.push(element.win_rate);
+            pieChartData.data.push(element.total_games);
     });
 
     console.log("Generated pie chart data set: " + pieChartData)
@@ -76,6 +92,11 @@ function generateHeatmapDataSet()
         {x: 'C', y: 'Y', v: 40},
         {x: 'C', y: 'Z', v: 40}
       ]
+}
+
+function generateLineChartDataSet()
+{
+    return 
 }
 
 

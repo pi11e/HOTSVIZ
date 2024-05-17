@@ -12,8 +12,10 @@ var uniqueGamesJSON = [];
 var _globalPool = undefined;
 
 
-const heroStatsQuery = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY win_rate DESC LIMIT 0, 1000";
-const winrateQuery = "SELECT game_hero, COUNT(*) AS total_wins FROM uniqueGames WHERE game_winner = 1 AND game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_wins DESC;"
+const queryForHeroStats = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_games DESC LIMIT 0, 1000";
+const queryForMapStats = "SELECT game_map, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_map ORDER BY game_map LIMIT 0, 1000";
+const queryForHeatmap = "";
+const queryForLineChart = "";
 
 
 
@@ -44,7 +46,7 @@ function serializeQuery(queryResult, filename)
     // Step 2: Write JSON string as file of the given filename
     // filename expects something like 'abc.json'
     const filepath = './data/'+filename;
-    console.log("serializing JSON: "+queryResult);
+    //console.log("serializing JSON: "+JSON.stringify(queryResult));
     fs.writeFileSync(filepath, JSON.stringify(queryResult));
 }
 
@@ -105,9 +107,14 @@ function handleResultsetAndSerialize (err, result) {
       }
       
   }
-  serializeQuery(result,"response.json");
+
+  var filename = undefined;
+  this.sql == queryForHeroStats ? filename = "queryForHeroStatsResult.json" : undefined;
+  this.sql == queryForMapStats ? filename = "queryForMapStatsResult.json" : undefined;
+
+  serializeQuery(result,filename);
   
-  console.log("query successful.");
+  console.log("serializing result for query " + this.sql);
   
 
 }
@@ -293,10 +300,6 @@ populateDatabase(replays);
 // rebuild gameData.json based on the blob of all joined unique games as json - not needed if we're building data based on the SQL database
 //fs.writeFileSync('./data/gameData.json', JSON.stringify(uniqueGamesJSON));
 
-// @TODO:
-// create datasets for the various visualizations and serialize them as JSON
-
-queryHeroWinrate(); // this should generate a response.json that holds all heroes, their total wins, games and winrate using the hero stats query.
 
 
 // load them in the visualization module
@@ -307,13 +310,14 @@ function queryHeroWinrate()
     // this query should return a result that contains a table with game_hero, total_games, total_wins, win_rate stats
     
 
-    queryDatabaseAndSerializeResult(heroStatsQuery);
+    queryDatabaseAndSerializeResult(queryForHeroStats);
     // result should be an array ordered by the highest number of total wins per unique hero
 }
 
 function queryMapWinrate()
 {
     // this is for another bar chart, data should look like this:
+    queryDatabaseAndSerializeResult(queryForMapStats);
 }
 
 function queryWinrateOverTime()
@@ -321,10 +325,18 @@ function queryWinrateOverTime()
     // this is for the line chart, data should look like this:
     // data: [0.54,0.60,0.51,0.42],
     // labels : [day1, ...]
+    queryDatabaseAndSerializeResult(queryForLineChart);
 }
 
 function queryHeroPerformancePerMap()
 {
     // this is for the heatmap, data should look like this:
 
+    queryDatabaseAndSerializeResult(queryForHeatmap);
 }
+
+
+queryHeroWinrate(); // this should generate a queryForHeroStatsResponse.json that holds all heroes, their total wins, games and winrate using the queryForHeroStats query.
+queryMapWinrate(); // this should generate a queryForMapStatsResponse.json that holds all maps, their total wins, games and winrate using the queryForMapStats query.
+queryWinrateOverTime();
+queryHeroPerformancePerMap();

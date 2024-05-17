@@ -38,100 +38,28 @@ import * as hotsdata from './hotsdata.js'
 
   
   
-  for(var i = 0; i < jsonData.length; i++)
-  {
-    var uniqueGame = jsonData[i];
 
-    // skip non-storm league games
-    if(uniqueGame.game_mode != 'stormLeague') continue;
+  // now we ignore all of the above and create the data from SQL instead.
+  // we need a labels[] that contains all the map names
+  // we need a wins[] and losses[] that contain the total wins / losses for the map
+  let barChartData = hotsdata.generateDataForChartType("barchart");
+  let lossData = barChartData.loss;
+  let winData = barChartData.wins;
 
-    var gameMap = uniqueGame.game_map;
-    var gameHero = uniqueGame.game_hero;
-    
-    const mapWinsForHero = new Map(); 
-    const heroWinsForMap = new Map();
+  const totalGames = lossData.concat(winData).reduce((partialSum, a) => partialSum + a, 0);
+  const totalWins = winData.reduce((partialSum, a) => partialSum + a, 0);
 
-    mapWinsForHero.set(gameHero, 0);
-    heroWinsForMap.set(gameMap, 0);
-  
-
-    if(!defeatPerMap.has(gameMap)) defeatPerMap.set(gameMap, 0); 
-    if(!winsPerMap.has(gameMap)) winsPerMap.set(gameMap, 0);
-    if(!heroWins.has(gameHero)) heroWins.set(gameHero,0);
-
-    // unfinished: imagine a matrix where (x,y) = (hero,map) = winrate of that hero on this map
-    //if(!heroPerformanceForMap.has(gameMap)) heroPerformanceForMap.set(gameMap, new Map().set(gameHero,0));
-    //if(!mapPerformanceForHero.has(gameHero)) mapPerformanceForHero.set(gameHero, new Map().set(gameMap, 0));
-    // or like this
-    // const heatmap = {heroName : gameHero, map : gameMap, wins++};
-    // if we're winning, get the hero/map we're on and increase the wincount
-    // if (game_winner) 
-    //  var currentWinsOfHeroOnMap = heroPerformanceForMap.get(gameMap).get(gameHero)
-    //  currentWinsOfHeroOnMap++;
-    // heroPerformanceForMap.set(gameMap).set(gameHero, currentWinsOfHeroOnMap);
-    //  var currentWinsOnMapForHero = mapPerformanceForHero.get(gameHero).get(gameMap)
-    //  currentWinsOfHeroOnMap++;
-    //  mapPerformanceForHero.set(gameHero).set(gameMap, currentWinsOfHeroOnMap)
-
-    var winsPerHero = heroWins.get(uniqueGame.game_hero);
-
-
-    // increase total games
-    //var totalGames = new Number(defeatPerMap.get(gameMap));
-    //totalGames++;
-    //defeatPerMap.set(gameMap, totalGames);
-
-    // increase total wins
-    if(uniqueGame.game_winner)
-    {
-      var totalWins = new Number(winsPerMap.get(gameMap));
-      totalWins++; 
-      globalWins++;
-      winsPerMap.set(gameMap, totalWins);
-
-      winsPerHero++;
-      heroWins.set(uniqueGame.game_hero, winsPerHero);
-      
-    }
-    else
-    {
-      var totalDefeats = new Number(defeatPerMap.get(gameMap));
-      totalDefeats++;
-      defeatPerMap.set(gameMap, totalDefeats);
-      
-    }
-      
-
-    
-
-    //console.log(heroPerformancePerMap);
-  };
-
-
-  // create datasets to use here
-  
-  var lossData = Array.from(defeatPerMap.values());
-  var winData = Array.from(winsPerMap.values());
-  
-  var xAxisLabels = Array.from(defeatPerMap.keys());
-
-  
-
-  // now make the charts
-  const totalGames = lossData.concat(winData).reduce((a,b)=>a+b);
-  const winRate = Math.round(globalWins/totalGames*100)/100;
-  //const totalGames = totalDefeats + totalWins;
-
+  const winRate = Math.round(totalWins *10000 / totalGames) / 100;
 
   new Chart(
     document.getElementById('barchart'),
     {
       type: 'bar',
       data: {
-        labels: xAxisLabels,
+        labels: barChartData.labels,//xAxisLabels,
         datasets: [
           {
-            label: 'Loss',
+            label: 'Defeat',
             data: lossData,
             backgroundColor: 'rgb(255, 99, 132)' //red
           },
@@ -146,7 +74,7 @@ import * as hotsdata from './hotsdata.js'
         plugins: {
           title : {
             display: true,
-            text: 'Winrate for last '+totalGames+' games: ' + winRate*100 + "%" 
+            text: 'Winrate over the last '+totalGames+' ranked games: ' + winRate + "%" 
           }
         },
         responsive: true,
@@ -177,7 +105,14 @@ import * as hotsdata from './hotsdata.js'
                     data: pieChartData.data // array[36] = [4,35,...]
                 }
             ]
-        }
+        }, 
+        options :{
+          plugins: {
+            title : {
+              display: true,
+              text: "Total ranked games per hero"
+            }
+          }}
 
 });
 
@@ -252,7 +187,7 @@ const config = {
     scales: {
       x: {
         type: 'category',
-        labels: ['A', 'B', 'C'],
+        labels: ['A', 'B', 'C'], // this should be the heroes
         ticks: {
           display: true
         },
@@ -262,7 +197,7 @@ const config = {
       },
       y: {
         type: 'category',
-        labels: ['X', 'Y', 'Z'],
+        labels: ['X', 'Y', 'Z'], // this should be the maps
         offset: true,
         ticks: {
           display: true
