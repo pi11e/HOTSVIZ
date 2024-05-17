@@ -1,14 +1,15 @@
+
+import * as fs from 'fs';
+
 /*
 
-This script is responsible for generating JSON blobs from a local MySQL database to be transformed into data that can be plugged into 
+This script is responsible for generating JSON blobs from a local MySQL database.
+It also exposes functions to serve this data so it can be plugged into 
 the Chart.js charts used by the visualizer (hotsviz) to render player statistics.
 
 */
 
-function processData()
-{
-    // create JSON blobs for the various chart types here
-}
+
 
 
 export function generateDataForChartType(chartType)
@@ -36,12 +37,29 @@ export function generateDataForChartType(chartType)
 
 function generateBarChartDataSet()
 {
-    
+    return undefined;
 }
 
 function generatePieChartDataSet()
 {
+
+
     // serve and adjust the datasets here
+    var pieChartData = { labels : [], data : []};
+
+    // read response
+    var jsonResponse = JSON.parse(fs.readFileSync('./data/response.json', 'utf-8'));
+    Array.from(jsonResponse).forEach(element => 
+        {
+            
+            pieChartData.labels.push(element.game_hero);
+            
+            pieChartData.data.push(element.win_rate);
+    });
+
+    console.log("Generated pie chart data set: " + pieChartData)
+
+    return pieChartData;
 }
 
 function generateHeatmapDataSet()
@@ -59,3 +77,13 @@ function generateHeatmapDataSet()
         {x: 'C', y: 'Z', v: 40}
       ]
 }
+
+
+
+function main()
+{
+    generatePieChartDataSet();
+}
+
+
+//main();

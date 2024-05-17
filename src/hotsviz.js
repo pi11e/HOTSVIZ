@@ -24,9 +24,8 @@ import * as hotsdata from './hotsdata.js'
 
   var jsonData = JSON.parse(fs.readFileSync('./data/gameData.json', 'utf-8'));
 
-  //console.log("test");
-  //console.log(jsonData);
-  
+  // BEGIN BAR CHART
+
   // lets build a new array that contains the map name and number of wins on it
   const defeatPerMap = new Map(); // key = map, value = # of losses on that map
   const winsPerMap = new Map(); // key = map, value = # of wins on that map
@@ -158,24 +157,33 @@ import * as hotsdata from './hotsdata.js'
     }
   );
 
+  // END BAR CHART
 
-  
+  // BEGIN PIE CHART
+  //console.log(Array.from(heroWins.keys()));  
+  //console.log(Array.from(heroWins.values()));
+
+  let pieChartData = hotsdata.generateDataForChartType("piechart");
 
   new Chart(
     document.getElementById('piechart'),
     {
         type: 'doughnut',
         data: {
-            labels: Array.from(heroWins.keys()),
+            labels: pieChartData.labels, // array[36] = ["Raynor", "Tracer", ...]
             datasets: [
                 {
                     label: 'Games',
-                    data: Array.from(heroWins.values())
+                    data: pieChartData.data // array[36] = [4,35,...]
                 }
             ]
         }
 
 });
+
+// END PIE CHART
+
+// BEGIN HEATMAP
 
 //this registers the MatrixController and MatrixElement plugins
 Chart.register(MatrixController, MatrixElement);
@@ -202,7 +210,7 @@ var tealColor = 'rgba(0,128,128,0.3)';
 // testing: get the data from hotsdata.js
 var heatmapData = hotsdata.generateDataForChartType("heatmap");
 
-// <block:data:1>
+
 const data = {
   datasets: [{
     label: 'My Matrix',
@@ -222,10 +230,7 @@ const data = {
     height: ({chart}) =>(chart.chartArea || {}).height / 3 - 1
   }]
 };
-// </block:data>
 
-
-// <block:config:0>
 const config = {
   type: 'matrix',
   data: data,
@@ -270,18 +275,21 @@ const config = {
   }
 };
 
-// </block:config>
+
 
   new Chart(
     document.getElementById('heatmap'),
     config
   )
 
+// END HEATMAP
 
-// Generate a line chart indicating winrate over time
+// BEGIN LINE CHART - indicating winrate over time
 
-
+// line chart axis labels
 const labels = ["day1", "day2", "day3", "day4"]
+
+// line chart data
 const lineChartData = {
   labels: labels,
   datasets: [
@@ -313,5 +321,6 @@ const lineChartConfig = {
 
 
 new Chart(document.getElementById('linechart'), lineChartConfig);
+// END LINECHART
 
 })();

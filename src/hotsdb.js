@@ -11,6 +11,12 @@ var uniqueGamesJSON = [];
 
 var _globalPool = undefined;
 
+
+const heroStatsQuery = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY win_rate DESC LIMIT 0, 1000";
+const winrateQuery = "SELECT game_hero, COUNT(*) AS total_wins FROM uniqueGames WHERE game_winner = 1 AND game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_wins DESC;"
+
+
+
 //TODO - use connection pool when running out of connections which happens as soon as you compile due to 500 connections being opened
 //var persistentConnection = undefined;
 
@@ -28,6 +34,20 @@ function createConnection(){
     return con;
 }
  */
+
+function serializeQuery(queryResult, filename)
+{
+    // create JSON blobs for the various chart types here
+
+    // Step 1: Take incoming query result and form a JSON string
+
+    // Step 2: Write JSON string as file of the given filename
+    // filename expects something like 'abc.json'
+    const filepath = './data/'+filename;
+    console.log("serializing JSON: "+queryResult);
+    fs.writeFileSync(filepath, JSON.stringify(queryResult));
+}
+
 function openConnection(){
   
   if(_globalPool == undefined)
@@ -63,12 +83,35 @@ function handleResultset (err, result) {
   len = result.length;
   
   console.log("query successful.");
+  
 
   /* for (i = 0; i < len; i += 1) 
     {
       console.log(result[i]);
   } */
 }
+
+function handleResultsetAndSerialize (err, result) {
+  var i, len;
+  if (err) 
+    {
+    if(err.code == 'ER_DATA_TOO_LONG')
+      {
+        console.log("ERROR: data exceeding max length")
+        
+      }
+      else{
+        throw err;
+      }
+      
+  }
+  serializeQuery(result,"response.json");
+  
+  console.log("query successful.");
+  
+
+}
+
 
 async function queryDatabase(queryString)
 {
@@ -84,7 +127,23 @@ async function queryDatabase(queryString)
   await sleep(1000);
   //console.log("executing query: " + queryString.slice(0,100) + " ...");
   con.query(queryString, handleResultset);
-  
+}
+
+export async function queryDatabaseAndSerializeResult(queryString)
+{
+  /* 
+  var con =  mysql.createConnection({
+    host: "localhost",
+    user: username,
+    password: password,
+    database: "games"
+  }); */
+  let con = openConnection();
+
+  await sleep(1000);
+  //console.log("executing query: " + queryString.slice(0,100) + " ...");
+  con.query(queryString, handleResultsetAndSerialize);
+ 
 
 }
 
@@ -192,12 +251,12 @@ function populateDatabase(files)
     return uniqueGamesJSON;
 }
 
-function serializeJSON(jsonData, filename)
+export function getResultForQuery(queryString)
 {
-  // filename expects something like 'abc.json'
-  const filepath = './data/'+filename;
-  fs.writeFileSync(filepath, JSON.stringify(jsonData));
+  return _globalResults.get(queryString);
 }
+
+
 
 
 //PROGRAM EXECUTION BELOW
@@ -235,6 +294,37 @@ populateDatabase(replays);
 //fs.writeFileSync('./data/gameData.json', JSON.stringify(uniqueGamesJSON));
 
 // @TODO:
-// create datasets for the various visualizations
-// serialize them as JSON
+// create datasets for the various visualizations and serialize them as JSON
+
+queryHeroWinrate(); // this should generate a response.json that holds all heroes, their total wins, games and winrate using the hero stats query.
+
+
 // load them in the visualization module
+function queryHeroWinrate()
+{
+    //this is for the bar chart
+
+    // this query should return a result that contains a table with game_hero, total_games, total_wins, win_rate stats
+    
+
+    queryDatabaseAndSerializeResult(heroStatsQuery);
+    // result should be an array ordered by the highest number of total wins per unique hero
+}
+
+function queryMapWinrate()
+{
+    // this is for another bar chart, data should look like this:
+}
+
+function queryWinrateOverTime()
+{
+    // this is for the line chart, data should look like this:
+    // data: [0.54,0.60,0.51,0.42],
+    // labels : [day1, ...]
+}
+
+function queryHeroPerformancePerMap()
+{
+    // this is for the heatmap, data should look like this:
+
+}
