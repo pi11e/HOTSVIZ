@@ -34,6 +34,8 @@ import * as hotsdata from './hotsdata.js'
   // we need a wins[] and losses[] that contain the total wins / losses for the map
   let barChartData = hotsdata.generateDataForChartType("barchart");
 
+  console.log(barChartData);
+
   let lossData = barChartData.loss;
   let winData = barChartData.wins;
 

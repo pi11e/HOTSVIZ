@@ -55,7 +55,7 @@ function generateBarChartDataSet()
 
     });
 
-    console.log(barChartData);
+    //console.log("bar chart = " + barChartData);
     return barChartData;
 }
 
@@ -77,7 +77,7 @@ function generatePieChartDataSet()
     });
 
     
-    console.log(pieChartData);
+    //console.log(pieChartData);
     return pieChartData;
 }
 
@@ -87,6 +87,23 @@ function generateHeatmapDataSet()
     var jsonResponse = JSON.parse(fs.readFileSync('./data/queryForHeatmapResult.json', 'utf-8'));
 
     // @TODO: process the real data and return a useful dataset.
+
+    // assume data consists of an array of one json blob per map where each looks like this:
+    // {"game_map" : "Dragon Shire", "Anubarak_winrate" : 0, "Artanis_winrate" : null, "Fenix_winrate" : 0.571428}
+    // there are about a dozen of these blobs which are all the same lenght - ie the number of heroes that every played any one map
+    // the values of the $heroname_winrate columns can be anywhere between 0-1 as well as null. a null value indicates this hero
+    // was never played on that map. 0 = the hero has been played but never won on that map; 1 = the hero has been played and always won on that map
+    // (ie won 100% of games on that map)
+    
+    // how do we get from there to what looks like the sample data below? it's always triples where 
+    // x is the "map" coordinate, y is the "hero" coordinate, and v is the winrate of that hero on that map
+
+    var realData = Array.from(jsonResponse);
+    console.log("heatmap data = "+ realData);
+    realData.forEach(rowInHeatMap => 
+        {
+            console.log("heatmap row = " + JSON.stringify(rowInHeatMap));
+    });
 
     // SAMPLE DATA
     var heatmapData = [
@@ -102,7 +119,7 @@ function generateHeatmapDataSet()
       ];
     // serve and adjust the datasets here
     
-    console.log(jsonResponse);
+    //console.log(jsonResponse);
     return heatmapData;
 }
 
@@ -111,24 +128,43 @@ function generateLineChartDataSet()
     // REAL DATA:
     var jsonResponse = JSON.parse(fs.readFileSync('./data/queryForLineChartResult.json', 'utf-8'));
 
-    // @TODO: process the real data and return a useful dataset.
+    // assume data consists of an array of (about 500) json blobs where each looks like this:
+    // {game_date : "2024-01-04", winrate_each_day : 0.66667, games_played : 3, games_won : 2, aggregate_winrate : 0.6333}
+    // this will contain one entry for each day at least one game was played on, the amount of wins and total games that day,
+    // the individual winrate on that day (ie that day's wins divided by total games played) and an accumulated winrate over this
+    // and all previous days, i.e. the total amount of wins divided by defeats on and up until that day
+    //console.log(jsonResponse);
 
-    // SAMPLE DATA
-    // line chart axis labels
-    const labels = ["day1", "day2", "day3", "day4"]
+    const labels = [];
+    const winrate_per_day = []; // dataset 1
+    const winrate_aggregate = []; // dataset 2
+
+    Array.from(jsonResponse).forEach(element => 
+        {
+            labels.push(element.game_date);
+            winrate_per_day.push(element.winrate_each_day);
+            winrate_aggregate.push(element.aggregate_winrate);
+    });
+
+    //console.log(labels);
 
     // line chart data
     const lineChartData = {
     labels: labels,
     datasets: [
     {
-      label: 'Dataset 1',
-      data: [0.54,0.60,0.51,0.42],
+      label: 'daily winrate',
+      data: winrate_per_day,
       borderColor: 'rgba(0,128,128,0.3)',
+    },
+    {
+        label: 'aggregate winrate',
+        data: winrate_aggregate,
+        borderColor: 'rgba(255,0,0,0.5)'
     }
   ]
 };
 
-    console.log(jsonResponse);
+    //console.log(jsonResponse);
     return lineChartData;
 }

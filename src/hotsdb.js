@@ -432,5 +432,5 @@ pool.query(statement1, (error, results) => {
 
 queryHeroWinrate(); // this should generate a queryForHeroStatsResponse.json that holds all heroes, their total wins, games and winrate using the queryForHeroStats query.
 queryMapWinrate(); // this should generate a queryForMapStatsResponse.json that holds all maps, their total wins, games and winrate using the queryForMapStats query.
-queryWinrateOverTime();
+//queryWinrateOverTime();
 //queryHeroPerformancePerMap();
