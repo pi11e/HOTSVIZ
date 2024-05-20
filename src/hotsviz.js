@@ -141,7 +141,7 @@ var heatmapData = hotsdata.generateDataForChartType("heatmap");
 
 const data = {
   datasets: [{
-    label: 'My Matrix',
+    label: 'Hero winrate heatmap',
     data: heatmapData,
     backgroundColor(context) {
       const value = context.dataset.data[context.dataIndex].v;
@@ -154,10 +154,13 @@ const data = {
       return tealColor;
     },
     borderWidth: 1,
-    width: ({chart}) => (chart.chartArea || {}).width / 3 - 1,
-    height: ({chart}) =>(chart.chartArea || {}).height / 3 - 1
+    width: ({chart}) => (chart.chartArea || {}).width / 2,
+    height: ({chart}) =>(chart.chartArea || {}).height / 2
   }]
 };
+
+console.log(data);
+
 
 const config = {
   type: 'matrix',
@@ -180,7 +183,8 @@ const config = {
     scales: {
       x: {
         type: 'category',
-        labels: ['A', 'B', 'C'], // this should be the heroes
+        //labels: ['A', 'B', 'C'], // this should be the heroes
+        labels: ['Anubarak', 'Artanis', 'Blaze', 'Fenix'],
         ticks: {
           display: true
         },
@@ -190,7 +194,8 @@ const config = {
       },
       y: {
         type: 'category',
-        labels: ['X', 'Y', 'Z'], // this should be the maps
+        //labels: ['X', 'Y', 'Z'], // this should be the maps
+        labels: ["Braxis Holdout", "Battlefield of Eternity", "Volskaya Foundry", "Dragon Shire"],
         offset: true,
         ticks: {
           display: true

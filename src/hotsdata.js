@@ -98,12 +98,30 @@ function generateHeatmapDataSet()
     // how do we get from there to what looks like the sample data below? it's always triples where 
     // x is the "map" coordinate, y is the "hero" coordinate, and v is the winrate of that hero on that map
 
-    var realData = Array.from(jsonResponse);
-    console.log("heatmap data = "+ realData);
-    realData.forEach(rowInHeatMap => 
-        {
-            console.log("heatmap row = " + JSON.stringify(rowInHeatMap));
-    });
+
+    var dataFromDB = Array.from(jsonResponse);
+    var resultData = [];
+    
+    
+    
+    dataFromDB.forEach(row => 
+    {
+        const mapName = row.game_map;
+        
+        Object.keys(row).forEach(key => {
+          if (key !== 'game_map') {
+            resultData.push({
+              x: key,  // hero
+              y: mapName,  // map
+              v: row[key]  // winrate value
+            });
+          }
+        });
+      });
+      
+
+    // var heatmapData = winrateMatrix;
+    console.log("HERE: " + JSON.stringify(resultData));
 
     // SAMPLE DATA
     var heatmapData = [
@@ -120,7 +138,8 @@ function generateHeatmapDataSet()
     // serve and adjust the datasets here
     
     //console.log(jsonResponse);
-    return heatmapData;
+    //return heatmapData;
+    return resultData;
 }
 
 function generateLineChartDataSet()
