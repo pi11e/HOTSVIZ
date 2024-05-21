@@ -140,14 +140,50 @@ var heatmapData = hotsdata.generateDataForChartType("heatmap");
 
 console.log(heatmapData);
 
+
+const rankedMaps = Array.from(JSON.parse(fs.readFileSync('./data/queryForRankedMapsResult.json', 'utf-8')));
+const rankedHeroes = Array.from(JSON.parse(fs.readFileSync('./data/queryForRankedHeroesResult.json', 'utf-8')));
+
+const mapLabels = [];
+const heroLabels = [];
+
+rankedHeroes.forEach(element => { heroLabels.push(element.game_hero)});
+rankedMaps.forEach(element => { mapLabels.push(element.game_map)});
+
+const matrixRowCount = rankedMaps.length;
+const matrixColumnCount = rankedHeroes.length;
+
+console.log("matrixColumnCount = " + matrixColumnCount);
+console.log("matrixRowCount = " + matrixRowCount);
+
 const data = {
   datasets: [{
     label: 'Hero winrate heatmap',
     data: heatmapData,
     backgroundColor(context) {
       const value = context.dataset.data[context.dataIndex].v;
-      const alpha = (value*30 - 5) / 40;
-      return 'rgba(128,0,0,'+alpha+')';
+
+      const tempHeroName = context.dataset.data[context.dataIndex].x;
+      const tempMapName = context.dataset.data[context.dataIndex].y;
+
+      console.log(tempHeroName + ":" + tempMapName + "=" + value);
+
+
+      const alpha = (value*50 - 5) / 40;
+      
+      var color = undefined;
+
+      if(value == null) 
+        {
+          
+          color = 'rgba(0,0,0,0.5)';
+        } 
+        else 
+        {
+          
+          color = 'rgba(0,128,0,'+alpha+')';
+        }
+        return color;
     },
     borderColor(context) {
       const value = context.dataset.data[context.dataIndex].v;
@@ -155,11 +191,10 @@ const data = {
       return 'rgba(0,0,0,0.5)'
     },
     borderWidth: 1,
-    width: ({chart}) => (chart.chartArea || {}).width / 53 -1, // x axis ... that's amount of columns-1 ie heroes. magic number: 51 distinct heroes in the dataset (incl non SL games)
-    height: ({chart}) =>(chart.chartArea || {}).height / 10 -1 // y axis ... that's amount of maps ie amount of objects in the dataset. magic number: 18 distinct maps in the dataset (incl non SL maps)
+    width: ({chart}) => (chart.chartArea || {}).width / matrixColumnCount -1, // x axis ... that's amount of columns-1 ie heroes. magic number: 51 distinct heroes in the dataset (incl non SL games)
+    height: ({chart}) =>(chart.chartArea || {}).height / matrixRowCount -1 // y axis ... that's amount of maps ie amount of objects in the dataset. magic number: 18 distinct maps in the dataset (incl non SL maps)
   }]
 };
-
 
 
 
@@ -187,7 +222,7 @@ const config = {
       x: {
         type: 'category',
         //labels: ['A', 'B', 'C'], // this should be the heroes
-        labels: ['Anubarak', 'Artanis', 'Blaze', 'Fenix'],
+        labels: heroLabels,
         ticks: {
           display: true
         },
@@ -198,7 +233,7 @@ const config = {
       y: {
         type: 'category',
         //labels: ['X', 'Y', 'Z'], // this should be the maps
-        labels: ["Braxis Holdout", "Battlefield of Eternity", "Volskaya Foundry", "Dragon Shire"],
+        labels: mapLabels,
         offset: true,
         ticks: {
           display: true

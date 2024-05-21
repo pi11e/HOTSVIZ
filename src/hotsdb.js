@@ -11,9 +11,13 @@ var uniqueGamesJSON = [];
 
 var _globalPool = undefined;
 
+const replayFilePath = fs.readFileSync("./data/data_path.cfg", "utf-8");
+
 
 const queryForHeroStats = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_games DESC LIMIT 0, 1000";
 const queryForMapStats = "SELECT game_map, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_map ORDER BY game_map LIMIT 0, 1000";
+const queryForRankedHeroes = "SELECT DISTINCT game_hero FROM uniqueGames WHERE game_mode = 'stormLeague'";
+const queryForRankedMaps = "SELECT DISTINCT game_map FROM uniqueGames WHERE game_mode = 'stormLeague'";
 const queryForHeatmap = fs.readFileSync('./data/heatmapquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
 const queryForLineChart = fs.readFileSync('./data/linechartquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
 //const queryForLineChart = "SELECT game_timestamp from uniqueGames"; // this is just sample data, throw it away later
@@ -118,6 +122,8 @@ function handleResultsetAndSerialize (err, result) {
   this.sql == queryForMapStats ? filename = "queryForMapStatsResult.json" : undefined;
   this.sql == queryForHeatmap ? filename = "queryForHeatmapResult.json" : undefined;
   this.sql == queryForLineChart ? filename = "queryForLineChartResult.json" : undefined;
+  this.sql == queryForRankedHeroes ? filename = "queryForRankedHeroesResult.json" : undefined;
+  this.sql == queryForRankedMaps ? filename = "queryForRankedMapsResult.json" : undefined;
 
   serializeQuery(result,filename);
   
@@ -178,7 +184,7 @@ async function createRowFromJSON(obj)
   const replay = {
     game_id : obj.RandomValue,
     game_timestamp : obj.Timestamp,
-    game_winner : "N/A",
+    game_winner : "'N/A'",
     game_mode : obj.GameMode,
     game_hero : hero,
     game_map : obj.MapInfo.MapName,
@@ -250,7 +256,7 @@ function populateDatabase(files)
 {
   for(const file of files)
     {
-      const fullPath = path.join(filePath, file);
+      const fullPath = path.join(replayFilePath, file);
       try {
         const jsonData = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
         createRowFromJSON(jsonData);  
@@ -291,17 +297,6 @@ CREATE TABLE uniqueGames (
 
 */
 
-// read config file to find the location of the replay json files
-var filePath = fs.readFileSync("./data/data_path.cfg", "utf-8");
-// read all files in the folder and build a collection
-const replays = fs.readdirSync(filePath);
-
-// use this to purge all records from said table to start over
-queryDatabase("DELETE FROM uniqueGames");
-
-// use this to fill the uniqueGames table in the games database on localhost with
-// replay data stored as JSON files found in the folder specified in data_path.cfg
-populateDatabase(replays);
 
 
 // rebuild gameData.json based on the blob of all joined unique games as json - not needed if we're building data based on the SQL database
@@ -444,10 +439,43 @@ pool.query(statement1, (error, results) => {
 
 }
 
+function queryRankedHeroes()
+{
+  
+  queryDatabaseAndSerializeResult(queryForRankedHeroes);
+}
+
+function queryRankedMaps()
+{
+  
+  queryDatabaseAndSerializeResult(queryForRankedMaps);
+}
+
+function resetDatabase()
+{
+  
+  
+  // read all files in the folder and build a collection
+  const replays = fs.readdirSync(replayFilePath);
+
+  // use this to purge all records from said table to start over
+  queryDatabase("DELETE FROM uniqueGames");
+
+  // use this to fill the uniqueGames table in the games database on localhost with
+  // replay data stored as JSON files found in the folder specified in data_path.cfg
+  populateDatabase(replays);
+
+}
+
+
+//resetDatabase();
 
 queryHeroWinrate(); // this should generate a queryForHeroStatsResponse.json that holds all heroes, their total wins, games and winrate using the queryForHeroStats query.
 queryMapWinrate(); // this should generate a queryForMapStatsResponse.json that holds all maps, their total wins, games and winrate using the queryForMapStats query.
 queryWinrateOverTime();
 queryHeroPerformancePerMap();
+
+queryRankedHeroes();
+queryRankedMaps();
 
 
