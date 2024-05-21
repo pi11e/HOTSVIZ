@@ -138,6 +138,7 @@ var tealColor = 'rgba(0,128,128,0.3)';
 // testing: get the data from hotsdata.js
 var heatmapData = hotsdata.generateDataForChartType("heatmap");
 
+console.log(heatmapData);
 
 const data = {
   datasets: [{
@@ -145,21 +146,23 @@ const data = {
     data: heatmapData,
     backgroundColor(context) {
       const value = context.dataset.data[context.dataIndex].v;
-      const alpha = (value - 5) / 40;
-      return tealColor;
+      const alpha = (value*30 - 5) / 40;
+      return 'rgba(128,0,0,'+alpha+')';
     },
     borderColor(context) {
       const value = context.dataset.data[context.dataIndex].v;
-      const alpha = (value - 5) / 40;
-      return tealColor;
+      const alpha = (value*30 - 5) / 40;
+      return 'rgba(0,0,0,0.5)'
     },
     borderWidth: 1,
-    width: ({chart}) => (chart.chartArea || {}).width / 2,
-    height: ({chart}) =>(chart.chartArea || {}).height / 2
+    width: ({chart}) => (chart.chartArea || {}).width / 53 -1, // x axis ... that's amount of columns-1 ie heroes. magic number: 51 distinct heroes in the dataset (incl non SL games)
+    height: ({chart}) =>(chart.chartArea || {}).height / 10 -1 // y axis ... that's amount of maps ie amount of objects in the dataset. magic number: 18 distinct maps in the dataset (incl non SL maps)
   }]
 };
 
-console.log(data);
+
+
+
 
 
 const config = {
@@ -175,7 +178,7 @@ const config = {
           },
           label(context) {
             const v = context.dataset.data[context.dataIndex];
-            return ['x: ' + v.x, 'y: ' + v.y, 'v: ' + v.v];
+            return ['hero: ' + v.x, 'map: ' + v.y, 'winrate: ' + v.v*100 + "%"];
           }
         }
       }

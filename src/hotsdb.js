@@ -15,8 +15,8 @@ var _globalPool = undefined;
 const queryForHeroStats = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_games DESC LIMIT 0, 1000";
 const queryForMapStats = "SELECT game_map, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_map ORDER BY game_map LIMIT 0, 1000";
 const queryForHeatmap = fs.readFileSync('./data/heatmapquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
-//const queryForLineChart = fs.readFileSync('./data/linechartquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
-const queryForLineChart = "SELECT game_timestamp from uniqueGames"; // this is just sample data, throw it away later
+const queryForLineChart = fs.readFileSync('./data/linechartquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
+//const queryForLineChart = "SELECT game_timestamp from uniqueGames"; // this is just sample data, throw it away later
 //const queryForHeatmap = "SELECT game_hero, game_map from uniqueGames"; // this is just sample data, throw it away later
 
 
@@ -51,7 +51,7 @@ function serializeQuery(queryResult, filename)
     // Step 2: Write JSON string as file of the given filename
     // filename expects something like 'abc.json'
     const filepath = './data/'+filename;
-    //console.log("serializing JSON: "+JSON.stringify(queryResult));
+    console.log("serializing JSON: "+JSON.stringify(queryResult));
     fs.writeFileSync(filepath, JSON.stringify(queryResult));
 }
 
@@ -121,7 +121,7 @@ function handleResultsetAndSerialize (err, result) {
 
   serializeQuery(result,filename);
   
-  console.log("serializing result for query " + this.sql);
+  //console.log("serializing result for query " + this.sql);
   
 
 }
@@ -333,10 +333,23 @@ function queryWinrateOverTime()
     // data: [0.54,0.60,0.51,0.42],
     // labels : [day1, ...]
     queryDatabaseAndSerializeResult(queryForLineChart);
+
+  
 }
 
 function queryHeroPerformancePerMap()
 {
+  queryDatabaseAndSerializeResult(queryForHeatmap);
+
+  /*
+  I originally tried to provide a compound / dynamically generated SQL statement to the queryDB function. it kept generating parsing errors, likely due to how quotes and ´ are handled differently
+  in SQL vs JS. As a result, ChatGPT suggested the following code to execute the dynamic queries sequentially. I never got this to work as the @sql variable kept coming up as null in statement 4.
+
+  Instead, what I did was I asked ChatGPT to help me condense the query back into a single, static one by providing it the fixed list of heroes and maps that may occur in the dataset. that's brute force 
+  and not elegant; and it does not contain truly all possible heroes since there might be heroes in the dataset I've never played so far. but it should at least produce a working, compile-time generated
+  dataset for the heatmap at last.
+
+  
     // this is for the heatmap, data should look like this:
   let pool = openConnection();
     //queryDatabaseAndSerializeResult(queryForHeatmap);
@@ -427,10 +440,14 @@ pool.query(statement1, (error, results) => {
 
 
 
+  */
+
 }
 
 
 queryHeroWinrate(); // this should generate a queryForHeroStatsResponse.json that holds all heroes, their total wins, games and winrate using the queryForHeroStats query.
 queryMapWinrate(); // this should generate a queryForMapStatsResponse.json that holds all maps, their total wins, games and winrate using the queryForMapStats query.
-//queryWinrateOverTime();
-//queryHeroPerformancePerMap();
+queryWinrateOverTime();
+queryHeroPerformancePerMap();
+
+
