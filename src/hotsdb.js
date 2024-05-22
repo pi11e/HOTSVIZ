@@ -3,6 +3,7 @@
 import mysql from 'mysql';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Console } from 'console';
 
 var username = "root";
 var password = "123456789";
@@ -177,34 +178,45 @@ async function createRowFromJSON(obj)
 {
   //console.log(obj);
 
+  // check if a replay owner exists - otherwise the replay may be incomplete or otherwise garbage
+  if(obj.ReplayOwner == null)
+  {
+    console.log("No replay owner found. Skipping file.")
+    return; 
+  }
   
-  var hero = undefined;
+  //var hero = undefined;
   var playerInfo = [];  
 
-  const replay = {
-    game_id : obj.RandomValue,
-    game_timestamp : obj.Timestamp,
-    game_winner : "'N/A'",
-    game_mode : obj.GameMode,
-    game_hero : hero,
-    game_map : obj.MapInfo.MapName,
-    game_players : playerInfo
-  }
+
+
+  var replay_gameID = obj.RandomValue;
+  var replay_timestamp = obj.Timestamp;
+  var replay_winner = "'N/A'";
+  var replay_mode = obj.GameMode;
+  var replay_hero = undefined;
+  var replay_map = obj.MapInfo.MapName;
+  var replay_players = playerInfo
+
+  
 
   //DEBUG
-  if(replay.game_map.includes("'"))
+  if(replay_map.includes("'"))
   {
-    replay.game_map = obj.MapInfo.MapId;
+    replay_map = obj.MapInfo.MapId;
   }
 
   // loop over all players
   Array.from(obj.Players).forEach(player => 
   {
-      var sanitizedHeroName = undefined;
+      
+      
 
       // determine if the replay owner was the winner of this match and store their hero name as well
       if(obj.ReplayOwner == player.PlayerToonId)
       {
+        var sanitizedHeroName = undefined;
+
         //console.log("Replay owner is " + player.PlayerToonId);
         // sanitize hero names that contain ' because SQL doesn't like that
         if(player.PlayerHero.HeroName.includes("'"))
@@ -216,8 +228,10 @@ async function createRowFromJSON(obj)
             sanitizedHeroName = player.PlayerHero.HeroName;
           }
           
-          replay.game_winner = player.IsWinner.toString();
-          replay.game_hero = sanitizedHeroName;
+          replay_winner = player.IsWinner.toString();
+          replay_hero = sanitizedHeroName;
+
+          if(replay_hero == undefined) console.log("replay_hero still undefined!");
           
       }
 
@@ -225,7 +239,7 @@ async function createRowFromJSON(obj)
         name : player.Name,
         battleTag : player.BattleTagName,
         toonId : player.PlayerToonId,
-        heroPlayed : sanitizedHeroName,
+        heroPlayed : replay_hero,
         team : player.Team,
         isWinner : player.IsWinner.toString(),
         isReplayOwner : (player.PlayerToonId == obj.ReplayOwner),
@@ -238,7 +252,15 @@ async function createRowFromJSON(obj)
   });
 
     
-  
+  const replay = {
+    game_id : replay_gameID,
+    game_timestamp : replay_timestamp,
+    game_winner : replay_winner,
+    game_mode : replay_mode,
+    game_hero : replay_hero,
+    game_map : replay_map,
+    game_players : replay_players
+  }
 
   // use mysql model:
   var insertThis = "INSERT INTO uniqueGames VALUES ("+replay.game_id+", '" + replay.game_timestamp + "', " + replay.game_winner +", '"+replay.game_mode+"', '"+replay.game_hero+"', '"+replay.game_map+"', '"+JSON.stringify(playerInfo).replaceAll("'","")+"');";
@@ -467,15 +489,21 @@ function resetDatabase()
 
 }
 
+// RESET DATABASE OR GENERATE DATA - for concurrency reasons, these need to be separate compilations
+const reset = false;
+if(reset)
+{
+  resetDatabase();
+}
+else
+{
+  queryHeroWinrate(); // this should generate a queryForHeroStatsResponse.json that holds all heroes, their total wins, games and winrate using the queryForHeroStats query.
+  queryMapWinrate(); // this should generate a queryForMapStatsResponse.json that holds all maps, their total wins, games and winrate using the queryForMapStats query.
+  queryWinrateOverTime();
+  queryHeroPerformancePerMap();
 
-//resetDatabase();
-
-queryHeroWinrate(); // this should generate a queryForHeroStatsResponse.json that holds all heroes, their total wins, games and winrate using the queryForHeroStats query.
-queryMapWinrate(); // this should generate a queryForMapStatsResponse.json that holds all maps, their total wins, games and winrate using the queryForMapStats query.
-queryWinrateOverTime();
-queryHeroPerformancePerMap();
-
-queryRankedHeroes();
-queryRankedMaps();
+  queryRankedHeroes();
+  queryRankedMaps();
+}
 
 

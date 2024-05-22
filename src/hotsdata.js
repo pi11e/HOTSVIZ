@@ -32,10 +32,14 @@ export function generateDataForChartType(chartType)
         case "linechart":
             dataSet = generateLineChartDataSet();
             break;
+        case "herochart":
+            dataSet = generateHeroChartDataSet();
+            break;
         default:
             break;
     }
 
+    console.log(dataSet);
     return dataSet;
 }
 
@@ -57,6 +61,30 @@ function generateBarChartDataSet()
 
     //console.log("bar chart = " + barChartData);
     return barChartData;
+}
+
+function generateHeroChartDataSet()
+{
+    // serve and adjust the datasets here
+    var heroChartData = { labels : [], data : []};
+
+    // read response
+    var jsonResponse = JSON.parse(fs.readFileSync('./data/queryForHeroStatsResult.json', 'utf-8'));
+    Array.from(jsonResponse).forEach(element => 
+        {
+            //console.log("checking hero " + JSON.stringify(element));
+            if(element.total_games > 2)
+                {
+                    //console.log("checking hero " + JSON.stringify(element));
+                    heroChartData.labels.push(element.game_hero);
+                    heroChartData.data.push(element.win_rate*100);
+                }
+            
+    });
+
+    
+    
+    return heroChartData;
 }
 
 function generatePieChartDataSet()
@@ -106,6 +134,8 @@ function generateHeatmapDataSet()
     
     dataFromDB.forEach(row => 
     {
+        
+
         const mapName = row.game_map;
         
         Object.keys(row).forEach(key => {
@@ -121,7 +151,7 @@ function generateHeatmapDataSet()
       
 
     // var heatmapData = winrateMatrix;
-    console.log("HERE: " + JSON.stringify(resultData));
+    //console.log("HERE: " + JSON.stringify(resultData));
 
     // SAMPLE DATA
     var heatmapData = [
@@ -158,12 +188,30 @@ function generateLineChartDataSet()
     const winrate_per_day = []; // dataset 1
     const winrate_aggregate = []; // dataset 2
 
+    // should probably ignore the first x elements as the aggregate will take a few swings til it settles
+    const game = Array.from(jsonResponse);
+    if(game.length < 40)
+    {
+        console.log("ERROR: Not enough games to show winrate evolution.");
+        return undefined;
+    }  
+
+    for(var i = 30; i < game.length; i++)
+    {
+        var element = game[i];
+        labels.push(element.game_date);
+        winrate_per_day.push(element.winrate_each_day);
+        winrate_aggregate.push(element.aggregate_winrate);
+    }
+
+    /*
     Array.from(jsonResponse).forEach(element => 
         {
+            
             labels.push(element.game_date);
             winrate_per_day.push(element.winrate_each_day);
             winrate_aggregate.push(element.aggregate_winrate);
-    });
+    });*/
 
     //console.log(labels);
 
@@ -175,11 +223,13 @@ function generateLineChartDataSet()
       label: 'daily winrate',
       data: winrate_per_day,
       borderColor: 'rgba(0,128,128,0.3)',
+      yAxisID: 'y'
     },
     {
         label: 'aggregate winrate',
         data: winrate_aggregate,
-        borderColor: 'rgba(255,0,0,0.5)'
+        borderColor: 'rgba(255,0,0,0.5)',
+        yAxisID: 'y1'
     }
   ]
 };

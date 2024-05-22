@@ -14,6 +14,7 @@ import * as util from 'util';
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
 
 import * as hotsdata from './hotsdata.js'
+import { callback } from 'chart.js/helpers';
 
 (async function() 
 {
@@ -33,8 +34,6 @@ import * as hotsdata from './hotsdata.js'
   // we need a labels[] that contains all the map names
   // we need a wins[] and losses[] that contain the total wins / losses for the map
   let barChartData = hotsdata.generateDataForChartType("barchart");
-
-  console.log(barChartData);
 
   let lossData = barChartData.loss;
   let winData = barChartData.wins;
@@ -72,19 +71,62 @@ import * as hotsdata from './hotsdata.js'
         },
         responsive: true,
         scales:{
-          x: { stacked: true},y: { stacked: true}
+          x: { stacked: true, ticks: {callback : function (value, index, ticks) 
+            {
+              var totalGamesOnMap = lossData[value] + winData[value];
+              var winrateOnMap = Math.round(winData[value]/totalGamesOnMap*100);
+              return barChartData.labels[value] + ": " + winrateOnMap + "%"
+            }}},y: { stacked: true}
         }
       }
     }
   );
 
   // END BAR CHART
+  let pieChartData = hotsdata.generateDataForChartType("piechart"); // used in both pie and hero charts :S
+  
+  // BEGIN HERO (another bar) CHART
+  let heroChartData = hotsdata.generateDataForChartType("herochart");
+
+  new Chart(
+    document.getElementById('herochart'),
+    {
+        type: 'bar',
+        data: {
+            labels: heroChartData.labels, // array[36] = ["Raynor", "Tracer", ...]
+            datasets: [
+                {
+                    label: 'winrate',
+                    data: heroChartData.data // array[36] = [4,35,...]
+                }
+            ]
+        }, 
+        options :{
+          plugins: {
+            title : {
+              display: true,
+              text: "Winrate in % per hero with more than 2 games"
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                callback : function (value, index, ticks)
+                {
+                  return heroChartData.labels[value] + ": " + pieChartData.data[value];
+                }
+              }
+            }
+          }}
+
+});
+
+  // END HERO (another bar) CHART
 
   // BEGIN PIE CHART
   //console.log(Array.from(heroWins.keys()));  
   //console.log(Array.from(heroWins.values()));
 
-  let pieChartData = hotsdata.generateDataForChartType("piechart");
 
   new Chart(
     document.getElementById('piechart'),
@@ -138,7 +180,7 @@ var tealColor = 'rgba(0,128,128,0.3)';
 // testing: get the data from hotsdata.js
 var heatmapData = hotsdata.generateDataForChartType("heatmap");
 
-console.log(heatmapData);
+//console.log(JSON.stringify(heatmapData));
 
 
 const rankedMaps = Array.from(JSON.parse(fs.readFileSync('./data/queryForRankedMapsResult.json', 'utf-8')));
@@ -153,8 +195,8 @@ rankedMaps.forEach(element => { mapLabels.push(element.game_map)});
 const matrixRowCount = rankedMaps.length;
 const matrixColumnCount = rankedHeroes.length;
 
-console.log("matrixColumnCount = " + matrixColumnCount);
-console.log("matrixRowCount = " + matrixRowCount);
+//console.log("matrixColumnCount = " + matrixColumnCount);
+//console.log("matrixRowCount = " + matrixRowCount);
 
 const data = {
   datasets: [{
@@ -163,10 +205,10 @@ const data = {
     backgroundColor(context) {
       const value = context.dataset.data[context.dataIndex].v;
 
-      const tempHeroName = context.dataset.data[context.dataIndex].x;
-      const tempMapName = context.dataset.data[context.dataIndex].y;
+      //const tempHeroName = context.dataset.data[context.dataIndex].x;
+      //const tempMapName = context.dataset.data[context.dataIndex].y;
 
-      console.log(tempHeroName + ":" + tempMapName + "=" + value);
+      //console.log(tempHeroName + ":" + tempMapName + "=" + value);
 
 
       const alpha = (value*50 - 5) / 40;
@@ -213,7 +255,10 @@ const config = {
           },
           label(context) {
             const v = context.dataset.data[context.dataIndex];
-            return ['hero: ' + v.x, 'map: ' + v.y, 'winrate: ' + v.v*100 + "%"];
+            
+            const wr = v.v == null ? "no game" : Math.round(v.v*100) + "%";
+
+            return ['hero: ' + v.x, 'map: ' + v.y, 'winrate: ' + wr];
           }
         }
       }
@@ -269,7 +314,26 @@ const lineChartConfig = {
       },
       title: {
         display: true,
-        text: 'Chart.js Line Chart'
+        text: 'daily vs. aggregate winrate'
+      }
+    },
+    scales: {
+      y: {
+        position: 'left'
+      },
+      y1: {
+        position: 'right',
+        max : 0.6,
+        min : 0.4
+      },
+      x:
+      {
+        ticks: {
+          callback : function (value, index, ticks)
+          {
+            return lineChartData.labels[value].substring(0,10);
+          }
+        }
       }
     }
   },
