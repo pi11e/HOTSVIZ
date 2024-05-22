@@ -35,12 +35,44 @@ export function generateDataForChartType(chartType)
         case "herochart":
             dataSet = generateHeroChartDataSet();
             break;
+        case "nestedmap":
+            dataSet = generateNestedMapDataSet();
+            break;
         default:
             break;
     }
 
     console.log(dataSet);
     return dataSet;
+}
+
+function generateNestedMapDataSet()
+{
+    const jsonResponse = JSON.parse(fs.readFileSync('./data/queryForNestedMapResult.json', 'utf-8'));
+
+        // Initialize the nested map structure
+    const mapOfMaps = new Map();
+
+    // Iterate over each item in the JSON data
+    jsonResponse.forEach(item => {
+        const gameMap = item.game_map;
+        const gameHero = item.game_hero;
+        const gamesPlayed = item.games_played;
+        const gamesWon = item.games_won;
+
+        // Check if the game map already exists in the outer map
+        if (!mapOfMaps.has(gameMap)) {
+            mapOfMaps.set(gameMap, new Map());
+        }
+
+        // Get the inner map corresponding to the current game map
+        const heroMap = mapOfMaps.get(gameMap);
+
+        // Set the number of games played and won for the current hero in the inner map
+        heroMap.set(gameHero, { games_played: gamesPlayed, games_won: gamesWon });
+    });
+
+    return mapOfMaps;
 }
 
 function generateBarChartDataSet()
@@ -137,6 +169,8 @@ function generateHeatmapDataSet()
         
 
         const mapName = row.game_map;
+
+        //@TO DO: would be nice to somehow include, in the label, the amount of games played on that map; or, in the ticks, the global WR of that hero
         
         Object.keys(row).forEach(key => {
           if (key !== 'game_map') {

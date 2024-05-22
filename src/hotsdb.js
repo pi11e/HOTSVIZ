@@ -19,10 +19,11 @@ const queryForHeroStats = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE W
 const queryForMapStats = "SELECT game_map, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_map ORDER BY game_map LIMIT 0, 1000";
 const queryForRankedHeroes = "SELECT DISTINCT game_hero FROM uniqueGames WHERE game_mode = 'stormLeague'";
 const queryForRankedMaps = "SELECT DISTINCT game_map FROM uniqueGames WHERE game_mode = 'stormLeague'";
-const queryForHeatmap = fs.readFileSync('./data/heatmapquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
-const queryForLineChart = fs.readFileSync('./data/linechartquery.cfg', 'utf-8'); // these don't work yet, the SQL throws errors due to a malformed query although in MySQL client they work. I assume a parsing problem.
-//const queryForLineChart = "SELECT game_timestamp from uniqueGames"; // this is just sample data, throw it away later
-//const queryForHeatmap = "SELECT game_hero, game_map from uniqueGames"; // this is just sample data, throw it away later
+const queryForHeatmap = fs.readFileSync('./data/heatmapquery.cfg', 'utf-8'); 
+const queryForLineChart = fs.readFileSync('./data/linechartquery.cfg', 'utf-8');
+const queryForNestedMap = fs.readFileSync('./data/nestedmapquery.cfg', 'utf-8');
+
+
 
 
 
@@ -125,6 +126,7 @@ function handleResultsetAndSerialize (err, result) {
   this.sql == queryForLineChart ? filename = "queryForLineChartResult.json" : undefined;
   this.sql == queryForRankedHeroes ? filename = "queryForRankedHeroesResult.json" : undefined;
   this.sql == queryForRankedMaps ? filename = "queryForRankedMapsResult.json" : undefined;
+  this.sql == queryForNestedMap ? filename = "queryForNestedMapResult.json" : undefined;
 
   serializeQuery(result,filename);
   
@@ -473,6 +475,11 @@ function queryRankedMaps()
   queryDatabaseAndSerializeResult(queryForRankedMaps);
 }
 
+function queryNestedMap()
+{
+  queryDatabaseAndSerializeResult(queryForNestedMap);
+}
+
 function resetDatabase()
 {
   
@@ -504,6 +511,7 @@ else
 
   queryRankedHeroes();
   queryRankedMaps();
+  queryNestedMap();
 }
 
 

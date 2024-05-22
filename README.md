@@ -39,3 +39,9 @@ then navigate to localhost:1234
 - hotsdata.js // parses local json files and turns them into datasets for consumption by Chart.js
 - hotsviz.js // renders Chart.js charts on an HTML5 canvas, handling all of the configuration and visualization of data it pulls from hotsdata.js which acts as an interface.
 - index.html // includes relevant scripts and defines the position of the HTML elements used for chart rendering 
+
+# HACKS
+
+- game hero / the hero taken for each replay to consider winrate is based on the hero played by the replay owner
+- the heat map is based on the maps and heroes appearing in the "queryForRankedMaps" and "queryForRankedHeroes" results... if you want your own heroes played in ranked to appear correctly, these need to be generated first 
+    (will automatically be the case when executing the hotsdb script in non-reset mode)

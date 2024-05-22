@@ -113,6 +113,7 @@ import { callback } from 'chart.js/helpers';
               ticks: {
                 callback : function (value, index, ticks)
                 {
+                  // show # of total games on the ticks
                   return heroChartData.labels[value] + ": " + pieChartData.data[value];
                 }
               }
@@ -195,8 +196,22 @@ rankedMaps.forEach(element => { mapLabels.push(element.game_map)});
 const matrixRowCount = rankedMaps.length;
 const matrixColumnCount = rankedHeroes.length;
 
-//console.log("matrixColumnCount = " + matrixColumnCount);
-//console.log("matrixRowCount = " + matrixRowCount);
+const nestedMapStats = hotsdata.generateDataForChartType("nestedmap");
+
+var heroStats = JSON.parse(fs.readFileSync('./data/queryForHeroStatsResult.json', 'utf-8'));
+var heroWinrate = new Map();
+heroStats.forEach(element => 
+  {
+    heroWinrate.set(element.game_hero, element.win_rate);
+});
+
+var mapStats = JSON.parse(fs.readFileSync('./data/queryForMapStatsResult.json', 'utf-8'));
+var mapWinrate = new Map();
+mapStats.forEach(element => 
+  {
+    mapWinrate.set(element.game_map, element.win_rate);
+});
+
 
 const data = {
   datasets: [{
@@ -205,17 +220,17 @@ const data = {
     backgroundColor(context) {
       const value = context.dataset.data[context.dataIndex].v;
 
-      //const tempHeroName = context.dataset.data[context.dataIndex].x;
-      //const tempMapName = context.dataset.data[context.dataIndex].y;
+      const tempHeroName = context.dataset.data[context.dataIndex].x;
+      const tempMapName = context.dataset.data[context.dataIndex].y;
 
-      //console.log(tempHeroName + ":" + tempMapName + "=" + value);
-
+      //console.log(nestedMapStats.get(tempMapName).get(tempHeroName));
+      
 
       const alpha = (value*50 - 5) / 40;
       
       var color = undefined;
 
-      if(value == null) 
+      if(!nestedMapStats.get(tempMapName).has(tempHeroName)) 
         {
           
           color = 'rgba(0,0,0,0.5)';
@@ -239,9 +254,6 @@ const data = {
 };
 
 
-
-
-
 const config = {
   type: 'matrix',
   data: data,
@@ -257,8 +269,10 @@ const config = {
             const v = context.dataset.data[context.dataIndex];
             
             const wr = v.v == null ? "no game" : Math.round(v.v*100) + "%";
-
-            return ['hero: ' + v.x, 'map: ' + v.y, 'winrate: ' + wr];
+            const mapAndHeroStats = nestedMapStats.get(v.y).get(v.x);
+            const gamesPlayed = mapAndHeroStats == undefined ? "none" : mapAndHeroStats.games_played;
+            
+            return [v.x + ' on ' + v.y, 'winrate: ' + wr, 'games: ' + gamesPlayed];
           }
         }
       }
@@ -269,7 +283,20 @@ const config = {
         //labels: ['A', 'B', 'C'], // this should be the heroes
         labels: heroLabels,
         ticks: {
-          display: true
+          display: true, 
+          callback : function (value, index, ticks)
+          {
+            var tempHeroName = heroLabels[value];
+            if(tempHeroName != null)
+            {
+              
+              return tempHeroName +" "+Math.round(heroWinrate.get(tempHeroName)*1000)/10 + "%";
+            }
+
+            return tempHeroName;
+            //console.log(index);
+            //console.log(ticks);
+          }
         },
         grid: {
           display: false
@@ -281,7 +308,17 @@ const config = {
         labels: mapLabels,
         offset: true,
         ticks: {
-          display: true
+          display: true,
+          callback : function (value, index, ticks)
+          {
+            var tempMapName = mapLabels[value];
+            if(tempMapName != null)
+            {
+              return tempMapName +" "+Math.round(mapWinrate.get(tempMapName)*1000)/10 + "%";
+            }
+
+            return tempMapName;
+          }
         },
         grid: {
           display: false
