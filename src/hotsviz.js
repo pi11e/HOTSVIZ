@@ -272,7 +272,7 @@ const config = {
             const mapAndHeroStats = nestedMapStats.get(v.y).get(v.x);
             const gamesPlayed = mapAndHeroStats == undefined ? "none" : mapAndHeroStats.games_played;
             
-            return [v.x + ' on ' + v.y, 'winrate: ' + wr, 'games: ' + gamesPlayed];
+            return [v.x + ' on ' + v.y, 'winrate: ' + wr, 'games played: ' + gamesPlayed];
           }
         }
       }
@@ -380,5 +380,42 @@ const lineChartConfig = {
 
 new Chart(document.getElementById('linechart'), lineChartConfig);
 // END LINECHART
+
+// BEGIN PARTYSIZE CHART
+let partyWinrateData = hotsdata.generateDataForChartType("partywinrate");
+
+new Chart(
+  document.getElementById('partywinrate'),
+  {
+    type: 'bar',
+    data: {
+      labels: [1,2,3,4,5],//xAxisLabels,
+      datasets: [
+        {
+          label: 'Defeats',
+          data: partyWinrateData[1],
+          backgroundColor: 'rgb(255, 99, 132)' //red
+        },
+        {
+          label: 'Wins',
+          data: partyWinrateData[0],
+          backgroundColor: 'rgb(75, 192, 192)' // green
+        }
+      ]
+    },
+    options :{
+      plugins: {
+        title : {
+          display: true,
+          text: 'Winrate per party size'
+        }
+      },
+      responsive: true,
+      scales:{
+        x: { stacked: true},y: { stacked: true}
+      }
+    }
+  }
+);
 
 })();

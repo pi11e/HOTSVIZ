@@ -38,6 +38,9 @@ export function generateDataForChartType(chartType)
         case "nestedmap":
             dataSet = generateNestedMapDataSet();
             break;
+        case "partywinrate":
+            dataSet = generatePartyWinrateDataSet();
+            break;
         default:
             break;
     }
@@ -270,4 +273,77 @@ function generateLineChartDataSet()
 
     //console.log(jsonResponse);
     return lineChartData;
+}
+
+function generatePartyWinrateDataSet()
+{
+    var jsonResponse = JSON.parse(fs.readFileSync('./data/queryForPartyWinrateResult.json', 'utf-8'));
+
+    var winData = [0,0,0,0,0]; // data[x] = winrate for party size x where x is the amount of party members (0 - solo, 4 - five stack)
+    var lossData = [0,0,0,0,0];
+
+    jsonResponse.forEach(element => 
+    {
+        var players = JSON.parse(element.game_ownerDetails);
+        var isWinner = JSON.parse(element.game_winner);
+        var replayOwnerParty = undefined;
+        var playersPerId = new Map();
+
+        
+
+        players.forEach(player => 
+        {
+                // here we'll find 10 players, one of which will be the replay owner.
+                // properties of each player are:
+                // accountLevel, battleTag, isReplayOwner, isWinner, name, party, talents[], team, toonId
+                // check for replay owner, then party id
+                if(player.party != null)
+                {
+                    if(!playersPerId.has(player.party))
+                    {
+                        // if the party ID has not been recorded yet, set it up and set its player count to 1
+                        playersPerId.set(player.party, 1);    
+                    }
+                    else
+                    {
+                        // if the party ID has been recorded previously, grab its current value, increase by one and save it back
+                        var playerCountForParty = playersPerId.get(player.party);
+                        playerCountForParty++;
+                        playersPerId.set(player.party, playerCountForParty);
+                    }
+                    
+                }
+                if(player.isReplayOwner)
+                {
+                    
+                    // if the replay owner was not in a party, register a win or loss for party size 0.
+                    if(player.party == null) 
+                    {
+                        isWinner == 1 ? winData[0] += 1 : lossData[0] += 1;
+                    } else {
+                        // otherwise, store party ID to later figure out the amount of party members
+                        replayOwnerParty = player.party;
+                    }
+                }
+                // at this point, we have:
+                // - stored each party id if the player has one
+                // - stored the party id of the replay owner, if there is one (otherwise we register a win with party size of 0)
+
+        });
+
+        if(replayOwnerParty != undefined) // if replayOwnerParty is still undefined here, the replay owner was not in a party and we don't need to do anything else
+        {
+            //however if they were in a party, we need to record a win for the respective size of the party.
+            var partySize = playersPerId.get(replayOwnerParty);
+            isWinner == 1 ? winData[partySize-1] += 1 : lossData[partySize-1] += 1;
+            //console.log("adding "+ isWinner == 1 ? "win" : "loss" +" for party size " + partySize-1)
+        }
+
+
+    });
+    
+    console.log(winData);
+    console.log(lossData);
+
+    return [winData,lossData];
 }
