@@ -29,6 +29,8 @@
         "chartjs-chart-matrix": "^2.0.1",
         "json-2-csv": "^5.5.1",
         "mysql": "^2.18.1",
-        "mysql2": "^3.9.7"
+        "mysql2": "^3.9.7",
+        "sqlite": "^5.1.1",
+        "sqlite3": "^5.1.7"
     }
 }

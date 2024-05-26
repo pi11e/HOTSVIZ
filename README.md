@@ -45,3 +45,17 @@ then navigate to localhost:1234
 - game hero / the hero taken for each replay to consider winrate is based on the hero played by the replay owner
 - the heat map is based on the maps and heroes appearing in the "queryForRankedMaps" and "queryForRankedHeroes" results... if you want your own heroes played in ranked to appear correctly, these need to be generated first 
     (will automatically be the case when executing the hotsdb script in non-reset mode)
+
+# TO DO'S
+
+
+- Build a better "out of the box" experience:
+-- further streamline the database population and .stormreplay file processing steps needed at the start (ideally, users only have to point to their replay folder and hit go)
+-- remove dependency on a running local MySQL instance, it's really overkill and introduces a difficult to manage dependency.
+    -> strategy: replace with sqlite database (local file)
+    -> notes: progress started; installed relevant node.js packages and created a new local database (./data/gameData_sqlite.db) and tools. 
+    -> find more info on dependencies and tools here
+        - https://sqlitebrowser.org/dl/
+        - https://www.npmjs.com/package/sqlite#installation
+
+- add dropdowns etc. to limit or switch visualization to specific heroes, players or other properties such as # of games played (only include stats for heroes that have x amount of games played)
