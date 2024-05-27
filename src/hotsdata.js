@@ -284,7 +284,7 @@ function generatePartyWinrateDataSet()
 
     jsonResponse.forEach(element => 
     {
-        var players = JSON.parse(element.game_ownerDetails);
+        var players = JSON.parse(element.game_players);
         var isWinner = JSON.parse(element.game_winner);
         var replayOwnerParty = undefined;
         var playersPerId = new Map();

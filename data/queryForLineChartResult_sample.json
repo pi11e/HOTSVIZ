@@ -1,5 +1,0 @@
-[{"game_date" : "2024-01-01", "winrate_each_day" : 0.5, "games_played" : 4, "games_won" : 2, "aggregate_winrate" : 0.5},
-{"game_date" : "2024-01-02", "winrate_each_day" : 0.75, "games_played" : 4, "games_won" : 3, "aggregate_winrate" : 0.625},
-{"game_date" : "2024-01-03", "winrate_each_day" : 1, "games_played" : 1, "games_won" : 1, "aggregate_winrate" : 0.667},
-{"game_date" : "2024-01-04", "winrate_each_day" : 0.0, "games_played" : 3, "games_won" : 0, "aggregate_winrate" : 0.5},
-{"game_date" : "2024-01-05", "winrate_each_day" : 0.5, "games_played" : 6, "games_won" : 3, "aggregate_winrate" : 0.5}]

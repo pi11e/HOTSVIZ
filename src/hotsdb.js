@@ -3,7 +3,9 @@
 import mysql from 'mysql';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Console } from 'console';
+import sqlite3 from 'sqlite3';
+import { open } from 'sqlite';
+
 
 var username = "root";
 var password = "123456789";
@@ -15,11 +17,11 @@ var _globalPool = undefined;
 const replayFilePath = fs.readFileSync("./data/data_path.cfg", "utf-8");
 
 
-const queryForHeroStats = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_games DESC LIMIT 0, 1000";
-const queryForMapStats = "SELECT game_map, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_map ORDER BY game_map LIMIT 0, 1000";
+const queryForHeroStats = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, CAST(SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_games DESC LIMIT 0, 1000";
+const queryForMapStats = "SELECT game_map, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, CAST(SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_map ORDER BY game_map LIMIT 0, 1000";
 const queryForRankedHeroes = "SELECT DISTINCT game_hero FROM uniqueGames WHERE game_mode = 'stormLeague'";
 const queryForRankedMaps = "SELECT DISTINCT game_map FROM uniqueGames WHERE game_mode = 'stormLeague'";
-const queryForPartyWinrate = "SELECT game_winner, game_ownerDetails FROM uniqueGames";
+const queryForPartyWinrate = "SELECT game_winner, game_players FROM uniqueGames";
 const queryForHeatmap = fs.readFileSync('./data/heatmapquery.cfg', 'utf-8'); 
 const queryForLineChart = fs.readFileSync('./data/linechartquery.cfg', 'utf-8');
 const queryForNestedMap = fs.readFileSync('./data/nestedmapquery.cfg', 'utf-8');
@@ -99,14 +101,10 @@ function handleResultset (err, result) {
   console.log("query successful.");
   
 
-  /* for (i = 0; i < len; i += 1) 
-    {
-      console.log(result[i]);
-  } */
 }
 
 function handleResultsetAndSerialize (err, result) {
-  var i, len;
+  
   if (err) 
     {
     if(err.code == 'ER_DATA_TOO_LONG')
@@ -132,45 +130,100 @@ function handleResultsetAndSerialize (err, result) {
 
   serializeQuery(result,filename);
   
-  //console.log("serializing result for query " + this.sql);
   
 
 }
 
+// OLD queryDatabase (using mysql)
+// async function queryDatabase(queryString)
+// {
+//   /* 
+//   var con =  mysql.createConnection({
+//     host: "localhost",
+//     user: username,
+//     password: password,
+//     database: "games"
+//   }); */
+//   let con = openConnection();
 
+//   await sleep(1000);
+//   //console.log("executing query: " + queryString.slice(0,100) + " ...");
+//   con.query(queryString, handleResultset);
+// }
+
+// new queryDatabase (using local sqlite file)
 async function queryDatabase(queryString)
 {
-  /* 
-  var con =  mysql.createConnection({
-    host: "localhost",
-    user: username,
-    password: password,
-    database: "games"
-  }); */
-  let con = openConnection();
+  const fileDB = new sqlite3.Database("./data/gameData_sqlite.db")
 
-  await sleep(1000);
-  //console.log("executing query: " + queryString.slice(0,100) + " ...");
-  con.query(queryString, handleResultset);
+  const parameters = [];
+  
+   // using db.each 
+  const resultSet = fileDB.all(queryString, parameters, (err, result) => {
+    // each row processed here
+    if(err)
+      {
+        console.error("ERROR: " + err);
+      }
+      else
+      {
+        console.log("Input operation successful.");
+      }
+  });
+
+  fileDB.close();
+  
 }
 
-export async function queryDatabaseAndSerializeResult(queryString)
-{
-  /* 
-  var con =  mysql.createConnection({
-    host: "localhost",
-    user: username,
-    password: password,
-    database: "games"
-  }); */
-  let con = openConnection();
+// OLD queryDatabaseAndSerializeResult
+// export async function queryDatabaseAndSerializeResult(queryString)
+// {
+//   /* 
+//   var con =  mysql.createConnection({
+//     host: "localhost",
+//     user: username,
+//     password: password,
+//     database: "games"
+//   }); */
+//   let con = openConnection();
 
-  await sleep(1000);
-  //console.log("executing query: " + queryString.slice(0,100) + " ...");
-  con.query(queryString, handleResultsetAndSerialize);
+//   await sleep(1000);
+//   //console.log("executing query: " + queryString.slice(0,100) + " ...");
+//   con.query(queryString, handleResultsetAndSerialize);
  
 
+// }
+
+// NEW queryDatabaseAndSerializeResult (using sqlite local file)
+export async function queryDatabaseAndSerializeResult(queryString, filename)
+{
+  const fileDB = new sqlite3.Database("./data/gameData_sqlite.db")
+
+  const parameters = [];
+  
+   // using db.each 
+  const resultSet = fileDB.all(queryString, parameters, (err, result) => 
+    {
+    // serialize result
+    if (err) 
+      {
+      if(err.code == 'ER_DATA_TOO_LONG')
+        {
+          console.log("ERROR: data exceeding max length")
+          
+        }
+        else{
+          throw err;
+        }
+        
+    }
+
+    serializeQuery(result,filename);
+  });
+  fileDB.close();
+
 }
+
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -338,14 +391,14 @@ function queryHeroWinrate()
     // this query should return a result that contains a table with game_hero, total_games, total_wins, win_rate stats
     
 
-    queryDatabaseAndSerializeResult(queryForHeroStats);
+    queryDatabaseAndSerializeResult(queryForHeroStats, 'queryForHeroStatsResult.json');
     // result should be an array ordered by the highest number of total wins per unique hero
 }
 
 function queryMapWinrate()
 {
     // this is for another bar chart, data should look like this:
-    queryDatabaseAndSerializeResult(queryForMapStats);
+    queryDatabaseAndSerializeResult(queryForMapStats, 'queryForMapStatsResult.json');
 }
 
 function queryWinrateOverTime()
@@ -353,138 +406,80 @@ function queryWinrateOverTime()
     // this is for the line chart, data should look like this:
     // data: [0.54,0.60,0.51,0.42],
     // labels : [day1, ...]
-    queryDatabaseAndSerializeResult(queryForLineChart);
+    queryDatabaseAndSerializeResult(queryForLineChart, 'queryForLineChartResult.json');
 
   
 }
 
 function queryHeroPerformancePerMap()
 {
-  queryDatabaseAndSerializeResult(queryForHeatmap);
+  // dynamically construct heatmap query
+  // START NEW STUFF
+/*
+  # Example list of heroes and maps
+heroes = ['Zuljin', 'Tracer', 'Anubarak', 'Tyrael', 'Fenix']
+maps = ['Braxis Holdout', 'Alterac Pass', 'Dragon Shire', 'Towers of Doom', 'Volskaya Foundry']
 
-  /*
-  I originally tried to provide a compound / dynamically generated SQL statement to the queryDB function. it kept generating parsing errors, likely due to how quotes and ´ are handled differently
-  in SQL vs JS. As a result, ChatGPT suggested the following code to execute the dynamic queries sequentially. I never got this to work as the @sql variable kept coming up as null in statement 4.
+# Create a connection to the SQLite database
+conn = sqlite3.connect('your_database.db')
+cursor = conn.cursor()
 
-  Instead, what I did was I asked ChatGPT to help me condense the query back into a single, static one by providing it the fixed list of heroes and maps that may occur in the dataset. that's brute force 
-  and not elegant; and it does not contain truly all possible heroes since there might be heroes in the dataset I've never played so far. but it should at least produce a working, compile-time generated
-  dataset for the heatmap at last.
+# Construct the SQL query dynamically
+base_query = """
+SELECT 
+    game_map, 
+"""
 
-  
-    // this is for the heatmap, data should look like this:
-  let pool = openConnection();
-    //queryDatabaseAndSerializeResult(queryForHeatmap);
-// Assuming you have a MySQL connection pool named `pool`
+# Add each hero's winrate calculation to the query
+for hero in heroes:
+    base_query += f"""
+    IFNULL(SUM(CASE WHEN game_hero = '{hero}' THEN game_winner ELSE 0 END) / NULLIF(SUM(CASE WHEN game_hero = '{hero}' THEN 1 ELSE 0 END), 0), 0) AS {hero},
+    """
 
-// Step 1: Set session variable for group_concat_max_len
-const statement1 = "SET SESSION group_concat_max_len = 1000000";
-pool.query(statement1, (error, results) => {
-    if (error) throw error;
-    console.log("Statement 1 OK"); // Log successful execution of statement 1
+# Remove the last comma
+base_query = base_query.rstrip(',') 
 
-    // Step 2: Fetch distinct maps
-    const statement2 = `
-        SET @maps = (
-            SELECT GROUP_CONCAT(DISTINCT CONCAT('''', game_map, ''''))
-            FROM uniqueGames
-            WHERE game_mode = 'stormLeague'
-        )`;
+# Add the rest of the query
+base_query += """
+FROM 
+    uniqueGames 
+WHERE 
+    game_mode = 'stormLeague' 
+"""
 
+# Add the maps condition dynamically
+if maps:
+    maps_str = ', '.join(f"'{map}'" for map in maps)
+    base_query += f"AND game_map IN ({maps_str}) "
 
+base_query += "GROUP BY game_map;"
+*/
 
-    pool.query(statement2, (error, results) => {
-        if (error) throw error;
-        console.log("Statement 2 OK"); // Log successful execution of statement 2
+  // END NEW STUFF
 
-        // Step 3: Fetch distinct heroes and construct dynamic SELECT clause
-        const statement3 = `
-            SET @heroes = (
-                SELECT GROUP_CONCAT(
-                    DISTINCT 
-                    CONCAT(
-                        'IFNULL(SUM(CASE WHEN game_hero = ''', REPLACE(game_hero, '''', ''''''), ''' THEN game_winner ELSE 0 END) / SUM(CASE WHEN game_hero = ''', REPLACE(game_hero, '''', ''''''), ''' THEN 1 ELSE 0 END), "N/A") AS \'', 
-                        game_hero, '\''
-                    )
-                ) 
-                FROM uniqueGames
-                WHERE game_mode = 'stormLeague'
-            )`;
-        pool.query(statement3, (error, results) => {
-            if (error) throw error;
-            console.log("Statement 3 OK"); // Log successful execution of statement 3
-
-            // Step 4: Construct the full query
-            const statement4 = `
-                SET @sql = CONCAT(
-                    'SELECT game_map, ', @heroes, 
-                    ' FROM uniqueGames WHERE game_mode = ''stormLeague'' AND game_map IN (', @maps, ') GROUP BY game_map'
-                )`;
-            pool.query(statement4, (error, results) => {
-                if (error) throw error;
-                console.log("Statement 4 OK"); // Log successful execution of statement 4
-                console.log("Constructed query:", results); // Debug: Print the constructed query
-
-                // Check if @sql is not NULL or empty
-                if (!results) {
-                    throw new Error("Failed to construct SQL statement.");
-                }
-
-                
-                
-                // Step 5: Prepare the dynamic statement
-              const statement5 = "PREPARE stmt FROM @sql";
-              pool.query(statement5, (error, results) => {
-                  if (error) throw error;
-                  console.log("Statement 5 OK"); // Log successful execution of statement 5
-
-                  // Step 6: Execute the prepared statement
-                  const executeStatement = "EXECUTE stmt";
-                  pool.query(executeStatement, (error, results) => {
-                      if (error) throw error;
-                      console.log("Statement 6 OK"); // Log successful execution of statement 6
-                      console.log(results); // Assuming you want to log the result
-
-                      // Step 7: Deallocate the prepared statement
-                      const deallocateStatement = "DEALLOCATE PREPARE stmt";
-                      pool.query(deallocateStatement, (error, results) => {
-                          if (error) throw error;
-                          console.log("Statement 7 OK"); // Log successful execution of statement 7
-                          console.log(results); // Assuming you want to log the result
-                      });
-                  });
-              });
-            });
-        });
-    });
-});
-
-
-
-
-  */
-
+  queryDatabaseAndSerializeResult(queryForHeatmap, 'queryForHeatmapResult.json');
 }
 
 function queryRankedHeroes()
 {
   
-  queryDatabaseAndSerializeResult(queryForRankedHeroes);
+  queryDatabaseAndSerializeResult(queryForRankedHeroes, "queryForRankedHeroesResult.json");
 }
 
 function queryRankedMaps()
 {
   
-  queryDatabaseAndSerializeResult(queryForRankedMaps);
+  queryDatabaseAndSerializeResult(queryForRankedMaps, "queryForRankedMapsResult.json");
 }
 
 function queryNestedMap()
 {
-  queryDatabaseAndSerializeResult(queryForNestedMap);
+  queryDatabaseAndSerializeResult(queryForNestedMap, "queryForNestedMapResult.json");
 }
 
 function queryPartyWinrate()
 {
-  queryDatabaseAndSerializeResult(queryForPartyWinrate);
+  queryDatabaseAndSerializeResult(queryForPartyWinrate, "queryForPartyWinrateResult.json");
 }
 
 function resetDatabase()
