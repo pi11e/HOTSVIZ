@@ -19,11 +19,23 @@ import { callback } from 'chart.js/helpers';
 (async function() 
 {
 
-  
-  
+  var heroStats = JSON.parse(fs.readFileSync('./data/queryForHeroStatsResult.json', 'utf-8'));
+  // herowinrate is used to display global hero winrate on x axis labels
+  var heroWinrate = new Map();
+  heroStats.forEach(element => 
+    {
+      heroWinrate.set(element.game_hero, [element.win_rate, element.total_games]);
+  });
 
+  // mapwinrate is used to display global map winrate on y axis labels
+  var mapStats = JSON.parse(fs.readFileSync('./data/queryForMapStatsResult.json', 'utf-8'));
+  var mapWinrate = new Map();
+  mapStats.forEach(element => 
+    {
+      mapWinrate.set(element.game_map, element.win_rate);
+  });
 
-  var jsonData = JSON.parse(fs.readFileSync('./data/gameData.json', 'utf-8'));
+  
 
   // BEGIN BAR CHART
 
@@ -114,6 +126,7 @@ import { callback } from 'chart.js/helpers';
                 callback : function (value, index, ticks)
                 {
                   // show # of total games on the ticks
+                  console.log(heroWinrate);
                   return heroChartData.labels[value] + ": " + pieChartData.data[value];
                 }
               }
@@ -198,19 +211,20 @@ const matrixColumnCount = rankedHeroes.length;
 
 const nestedMapStats = hotsdata.generateDataForChartType("nestedmap");
 
-var heroStats = JSON.parse(fs.readFileSync('./data/queryForHeroStatsResult.json', 'utf-8'));
-var heroWinrate = new Map();
-heroStats.forEach(element => 
-  {
-    heroWinrate.set(element.game_hero, element.win_rate);
-});
 
-var mapStats = JSON.parse(fs.readFileSync('./data/queryForMapStatsResult.json', 'utf-8'));
-var mapWinrate = new Map();
-mapStats.forEach(element => 
-  {
-    mapWinrate.set(element.game_map, element.win_rate);
-});
+
+
+// NESTED MAP STATS = 
+// {$map, new Map(){$hero, {games_won, games_played}}}
+// example usage:
+// const tracerWinrateOnAlteracPass = nestedMapStats.get('Alterac Pass').get('Tracer').games_won / nestedMapStats.get('Alterac Pass').get('Tracer').games_played // round to 2 decimals using Math.round() after
+
+// HERO STATS =
+// [{map:map1, hero1:winrate, hero2:winrate, ...},{map:map2, hero1:winrate, hero2:winrate,...}]
+// example usage:
+// foreach (obj in heroStats) => obj.hero1 ...
+
+
 
 
 const data = {
@@ -219,6 +233,8 @@ const data = {
     data: heatmapData,
     backgroundColor(context) {
       const value = context.dataset.data[context.dataIndex].v;
+
+      //console.log(heatmapData);
 
       const tempHeroName = context.dataset.data[context.dataIndex].x;
       const tempMapName = context.dataset.data[context.dataIndex].y;
@@ -230,15 +246,21 @@ const data = {
       
       var color = undefined;
 
-      if(!nestedMapStats.get(tempMapName).has(tempHeroName)) 
-        {
+      // if(!nestedMapStats.get(tempMapName).has(tempHeroName)) 
+      //   {
           
+      //     color = 'rgba(0,0,0,0.5)';
+      //   } 
+      //   else 
+      //   {
+          
+      //     color = 'rgba(0,128,0,'+alpha+')';
+      //   }
+        if(value == null) {
           color = 'rgba(0,0,0,0.5)';
-        } 
-        else 
-        {
-          
-          color = 'rgba(0,128,0,'+alpha+')';
+        } else {
+          // color = 'rgba(0,128,0,'+alpha+')';
+          color = calculateRGBA(value, nestedMapStats.get(tempMapName).get(tempHeroName).games_played);
         }
         return color;
     },
@@ -268,7 +290,7 @@ const config = {
           label(context) {
             const v = context.dataset.data[context.dataIndex];
             
-            const wr = v.v == null ? "no game" : Math.round(v.v*100) + "%";
+            const wr = v.v == null ? "N/A" : Math.round(v.v*100) + "%";
             const mapAndHeroStats = nestedMapStats.get(v.y).get(v.x);
             const gamesPlayed = mapAndHeroStats == undefined ? "none" : mapAndHeroStats.games_played;
             
@@ -289,8 +311,8 @@ const config = {
             var tempHeroName = heroLabels[value];
             if(tempHeroName != null)
             {
-              
-              return tempHeroName +" "+Math.round(heroWinrate.get(tempHeroName)*1000)/10 + "%";
+              const win_rate = heroWinrate.get(tempHeroName)[0];
+              return tempHeroName +" "+Math.round(win_rate*1000)/10 + "%";
             }
 
             return tempHeroName;
@@ -419,3 +441,18 @@ new Chart(
 );
 
 })();
+
+function calculateRGBA(winrate, gamesPlayed) {
+  // Calculate the red, green, and alpha components
+  const red = Math.round(255 * (1 - winrate));
+  const green = Math.round(255 * winrate);
+  const blue = 0; // Blue component is always 0
+
+  // Normalize gamesPlayed to a range for alpha (for example, between 0.1 and 1)
+  // Adjust the scale factor as needed to fit your data
+  const scaleFactor = 0.2;
+  const alpha = Math.min(Math.max((gamesPlayed * scaleFactor), 0.1), 1).toFixed(2);
+
+  // Return the RGBA color string
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}

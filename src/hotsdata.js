@@ -21,7 +21,7 @@ export function generateDataForChartType(chartType)
     switch (chartType) {
         case "heatmap":
             // generate & return heat map data
-            dataSet = generateHeatmapDataSet();
+            dataSet = generateHeatmapDataSet2();
             break;
         case "piechart":
             dataSet = generatePieChartDataSet();
@@ -207,6 +207,54 @@ function generateHeatmapDataSet()
     //console.log(jsonResponse);
     //return heatmapData;
     return resultData;
+}
+
+function generateHeatmapDataSet2()
+{
+    // as an alternative to the original monstrous query, build a data structure that looks like this from the nested map obtained from generateNestedMapDataSet()
+    const nestedMap = generateNestedMapDataSet();
+
+    const rankedMaps = JSON.parse(fs.readFileSync('./data/queryForRankedMapsResult.json', 'utf-8'));
+    const rankedHeroes = JSON.parse(fs.readFileSync('./data/queryForRankedHeroesResult.json', 'utf-8'));
+
+    var dataSet = [];
+    
+// NESTED MAP STATS = 
+// {$map, new Map(){$hero, {games_won, games_played}}}
+// example usage:
+// const tracerWinrateOnAlteracPass = nestedMapStats.get('Alterac Pass').get('Tracer').games_won / nestedMapStats.get('Alterac Pass').get('Tracer').games_played // round to 2 decimals using Math.round() after
+
+// HERO STATS =
+// [{map:map1, hero1:winrate, hero2:winrate, ...},{map:map2, hero1:winrate, hero2:winrate,...}]
+// example usage:
+// foreach (obj in heroStats) => obj.hero1 ...
+
+    rankedMaps.forEach(rankedMap => 
+        {
+            const mapName = rankedMap.game_map;
+
+            // now collect all the hero winrates on that map
+            
+
+            rankedHeroes.forEach(rankedHero => 
+            {
+                const heroName = rankedHero.game_hero;
+                var winRate = null;
+
+                if(nestedMap.get(mapName).has(heroName))
+                {
+                    winRate = nestedMap.get(mapName).get(heroName).games_won / nestedMap.get(mapName).get(heroName).games_played;
+                }
+
+                dataSet.push({x: heroName, y: mapName, v: winRate});
+
+            });
+
+            
+    });
+
+
+    return dataSet;
 }
 
 function generateLineChartDataSet()

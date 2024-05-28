@@ -3,20 +3,18 @@ A project made to process Heroes of the Storm replays and visualize player stati
 
 Preparations:
 1. Install node.js including npm from here: https://nodejs.org/en/download/package-manager 
-2. Verify by running npm -v in a command line of your choice - it should print the version string of npm.
-3. Install mysql community server and MySQL workbench from here: https://dev.mysql.com/downloads/mysql/
-4. Clone or download this repository, then run npm install via commandline in the root directory of this repository. This should evaluate the package.json file and install all listed dependencies.
-5. Verify by running npm run dev - this should at least indicate a webserver has started successfully, even if some files required for stats visualization may be incorrect or missing.
+2. Verify by running 'npm -v' in a command line of your choice - it should print the version string of npm.
+3. Clone or download this repository, then run 'npm install' via commandline in the root directory of this repository. This should evaluate the package.json file and install all listed dependencies.
+4. Verify by running 'npm run dev'. This should at least indicate a webserver has started successfully, even if some files required for stats visualization may be incorrect or missing.
 
 Instructions:
 1. In your replay folder, run the included convertToJSON.bat file (copy it there first). It will call heroes-decode (from https://github.com/HeroesToolChest) to convert replay files into JSON.
 2. Next, point the data_path.cfg to the folder that contains your json replays (better not to do this directly in your live replay folder - perhaps copy them to a temp folder first, then point at that). 
-3. Run the hotsdb.js script to populate a local mysql database with the replay data and generate a number of json files used to visualize this data. 
-    ! Make sure to edit the database credentials at the top of the script to fit your user setup as configured when installing your mysql server.
+3. Run the hotsdb.js script to populate a local sqlite database with the replay data and generate a number of json files used to visualize this data. 
 4. Type npm run dev in the root directory of this repository again to launch a local webserver hosting index.html on localhost:1234 to bootstrap the visualization client (hosted on a simple HTML5 canvas via Chart.js).
 
 In short:
-To populate your own database, install a mysql server then configure and run hotsdb.js.
+To populate your own database, convert your .stormReplay files to JSON, then execute hotsdb.js twice - once in initialize mode, once in preload mode (see bottom of file).
 
 To build, make sure you have node.js and npm installed.
 
@@ -43,19 +41,17 @@ then navigate to localhost:1234
 # HACKS
 
 - game hero / the hero taken for each replay to consider winrate is based on the hero played by the replay owner
-- the heat map is based on the maps and heroes appearing in the "queryForRankedMaps" and "queryForRankedHeroes" results... if you want your own heroes played in ranked to appear correctly, these need to be generated first 
-    (will automatically be the case when executing the hotsdb script in non-reset mode)
 
 # TO DO'S
 
 
 - Build a better "out of the box" experience:
 -- further streamline the database population and .stormreplay file processing steps needed at the start (ideally, users only have to point to their replay folder and hit go)
--- remove dependency on a running local MySQL instance, it's really overkill and introduces a difficult to manage dependency.
-    -> strategy: replace with sqlite database (local file)
-    -> notes: progress started; installed relevant node.js packages and created a new local database (./data/gameData_sqlite.db) and tools. 
+--- trigger database initialization and preload either automatically or via user interaction on the website if possible
+-- integrate HeroesDecoder natively (C# / .NET app) so it doesn't have to be installed and executed separately?
     -> find more info on dependencies and tools here
         - https://sqlitebrowser.org/dl/
         - https://www.npmjs.com/package/sqlite#installation
 
 - add dropdowns etc. to limit or switch visualization to specific heroes, players or other properties such as # of games played (only include stats for heroes that have x amount of games played)
+

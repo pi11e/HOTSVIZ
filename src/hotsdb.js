@@ -19,8 +19,8 @@ const replayFilePath = fs.readFileSync("./data/data_path.cfg", "utf-8");
 
 const queryForHeroStats = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, CAST(SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_games DESC LIMIT 0, 1000";
 const queryForMapStats = "SELECT game_map, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, CAST(SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_map ORDER BY game_map LIMIT 0, 1000";
-const queryForRankedHeroes = "SELECT DISTINCT game_hero FROM uniqueGames WHERE game_mode = 'stormLeague'";
-const queryForRankedMaps = "SELECT DISTINCT game_map FROM uniqueGames WHERE game_mode = 'stormLeague'";
+const queryForRankedHeroes = "SELECT DISTINCT game_hero FROM uniqueGames WHERE game_mode = 'stormLeague' ORDER BY game_hero";
+const queryForRankedMaps = "SELECT DISTINCT game_map FROM uniqueGames WHERE game_mode = 'stormLeague' ORDER BY game_map";
 const queryForPartyWinrate = "SELECT game_winner, game_players FROM uniqueGames";
 const queryForHeatmap = fs.readFileSync('./data/heatmapquery.cfg', 'utf-8'); 
 const queryForLineChart = fs.readFileSync('./data/linechartquery.cfg', 'utf-8');
@@ -499,8 +499,8 @@ function resetDatabase()
 }
 
 // RESET DATABASE OR GENERATE DATA - for concurrency reasons, these need to be separate compilations
-const reset = false;
-if(reset)
+const initialize = false;
+if(initialize)
 {
   resetDatabase();
 }
