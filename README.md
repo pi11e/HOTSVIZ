@@ -54,4 +54,4 @@ then navigate to localhost:1234
         - https://www.npmjs.com/package/sqlite#installation
 
 - add dropdowns etc. to limit or switch visualization to specific heroes, players or other properties such as # of games played (only include stats for heroes that have x amount of games played)
-
+- find a way to scan for and add to database only the NEW replays (ie check replay folder, convert previously unknown replays to json, then populate DB and delete JSON?)
