@@ -1,18 +1,15 @@
 //https://www.w3schools.com/nodejs/nodejs_mysql.asp
 //import mysql from 'mysql2/promise';
-import mysql from 'mysql';
-import * as fs from 'fs';
-import * as path from 'path';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
+
+ import * as fs from 'fs';
+
+ import * as path from 'path';
+ import sqlite3 from 'sqlite3';
 
 
-var username = "root";
-var password = "123456789";
+
 
 var uniqueGamesJSON = [];
-
-var _globalPool = undefined;
 
 const replayFilePath = fs.readFileSync("./data/data_path.cfg", "utf-8");
 
@@ -28,29 +25,6 @@ const queryForNestedMap = fs.readFileSync('./data/nestedmapquery.cfg', 'utf-8');
 
 
 
-
-
-
-
-
-//TODO - use connection pool when running out of connections which happens as soon as you compile due to 500 connections being opened
-//var persistentConnection = undefined;
-
-
-/* 
-function createConnection(){
-    var con =  mysql.createConnection({
-        host: "localhost",
-        user: username,
-        password: password,
-        database: "games"
-      });
-    
-    
-    return con;
-}
- */
-
 function serializeQuery(queryResult, filename)
 {
     // create JSON blobs for the various chart types here
@@ -60,26 +34,10 @@ function serializeQuery(queryResult, filename)
     // Step 2: Write JSON string as file of the given filename
     // filename expects something like 'abc.json'
     const filepath = './data/'+filename;
-    console.log("serializing JSON: "+JSON.stringify(queryResult));
+
     fs.writeFileSync(filepath, JSON.stringify(queryResult));
 }
 
-function openConnection(){
-  
-  if(_globalPool == undefined)
-    {
-      _globalPool = mysql.createPool({
-        host: "localhost",
-        user: username,
-        password: password,
-        database: "games"
-      });
-    }
-  
-  
-  
-  return _globalPool;
-}
 
 
 function handleResultset (err, result) {
@@ -103,59 +61,11 @@ function handleResultset (err, result) {
 
 }
 
-function handleResultsetAndSerialize (err, result) {
-  
-  if (err) 
-    {
-    if(err.code == 'ER_DATA_TOO_LONG')
-      {
-        console.log("ERROR: data exceeding max length")
-        
-      }
-      else{
-        throw err;
-      }
-      
-  }
-
-  var filename = undefined;
-  this.sql == queryForHeroStats ? filename = "queryForHeroStatsResult.json" : undefined;
-  this.sql == queryForMapStats ? filename = "queryForMapStatsResult.json" : undefined;
-  this.sql == queryForHeatmap ? filename = "queryForHeatmapResult.json" : undefined;
-  this.sql == queryForLineChart ? filename = "queryForLineChartResult.json" : undefined;
-  this.sql == queryForRankedHeroes ? filename = "queryForRankedHeroesResult.json" : undefined;
-  this.sql == queryForRankedMaps ? filename = "queryForRankedMapsResult.json" : undefined;
-  this.sql == queryForNestedMap ? filename = "queryForNestedMapResult.json" : undefined;
-  this.sql == queryForPartyWinrate ? filename = "queryForPartyWinrateResult.json" : undefined;
-
-  serializeQuery(result,filename);
-  
-  
-
-}
-
-// OLD queryDatabase (using mysql)
-// async function queryDatabase(queryString)
-// {
-//   /* 
-//   var con =  mysql.createConnection({
-//     host: "localhost",
-//     user: username,
-//     password: password,
-//     database: "games"
-//   }); */
-//   let con = openConnection();
-
-//   await sleep(1000);
-//   //console.log("executing query: " + queryString.slice(0,100) + " ...");
-//   con.query(queryString, handleResultset);
-// }
-
 // new queryDatabase (using local sqlite file)
 async function queryDatabase(queryString)
 {
   const fileDB = new sqlite3.Database("./data/gameData_sqlite.db")
-
+  fileDB.run('PRAGMA sjournal_mode = WAL;');
   const parameters = [];
   
    // using db.each 
@@ -163,42 +73,32 @@ async function queryDatabase(queryString)
     // each row processed here
     if(err)
       {
-        console.error("ERROR: " + err);
+        
+        if(err.code == 'SQLITE_BUSY')
+          {
+            console.log("Database busy - retrying...");
+            //console.log(queryString.slice(0,100));
+            queryDatabase(queryString);
+          }
+          else{
+            console.error("ERROR: " + err);
+          }
       }
       else
       {
         console.log("Input operation successful.");
       }
   });
-
+  //await sleep(1000);
   fileDB.close();
   
 }
-
-// OLD queryDatabaseAndSerializeResult
-// export async function queryDatabaseAndSerializeResult(queryString)
-// {
-//   /* 
-//   var con =  mysql.createConnection({
-//     host: "localhost",
-//     user: username,
-//     password: password,
-//     database: "games"
-//   }); */
-//   let con = openConnection();
-
-//   await sleep(1000);
-//   //console.log("executing query: " + queryString.slice(0,100) + " ...");
-//   con.query(queryString, handleResultsetAndSerialize);
- 
-
-// }
 
 // NEW queryDatabaseAndSerializeResult (using sqlite local file)
 export async function queryDatabaseAndSerializeResult(queryString, filename)
 {
   const fileDB = new sqlite3.Database("./data/gameData_sqlite.db")
-
+  
   const parameters = [];
   
    // using db.each 
@@ -219,6 +119,7 @@ export async function queryDatabaseAndSerializeResult(queryString, filename)
     }
 
     serializeQuery(result,filename);
+    console.log("Output operation successful.");
   });
   fileDB.close();
 
@@ -238,7 +139,7 @@ async function createRowFromJSON(obj)
   // check if a replay owner exists - otherwise the replay may be incomplete or otherwise garbage
   if(obj.ReplayOwner == null)
   {
-    console.log("No replay owner found. Skipping file.")
+    console.warn("No replay owner found. Skipping file.")
     return; 
   }
   
@@ -257,7 +158,7 @@ async function createRowFromJSON(obj)
 
   
 
-  //DEBUG
+  
   if(replay_map.includes("'"))
   {
     replay_map = obj.MapInfo.MapId;
@@ -323,8 +224,6 @@ async function createRowFromJSON(obj)
   var insertThis = "INSERT INTO uniqueGames VALUES ("+replay.game_id+", '" + replay.game_timestamp + "', " + replay.game_winner +", '"+replay.game_mode+"', '"+replay.game_hero+"', '"+replay.game_map+"', '"+JSON.stringify(playerInfo).replaceAll("'","")+"');";
   queryDatabase(insertThis);
 
-  // use runtime JSON model:
-  uniqueGamesJSON.push(replay);
 }
 
 /*
@@ -341,22 +240,13 @@ function populateDatabase(files)
         createRowFromJSON(jsonData);  
       } catch (error) 
       {
-        console.log("Database population failed for replay " + fullPath +". Check replay integrity. Skipping file.")
+        console.warn("Database population failed for replay " + fullPath +". Check replay integrity. Skipping file.")
         //console.log(error)  
       }
       
     };
 
-    return uniqueGamesJSON;
 }
-
-export function getResultForQuery(queryString)
-{
-  return _globalResults.get(queryString);
-}
-
-
-
 
 //PROGRAM EXECUTION BELOW
 
@@ -413,50 +303,6 @@ function queryWinrateOverTime()
 
 function queryHeroPerformancePerMap()
 {
-  // dynamically construct heatmap query
-  // START NEW STUFF
-/*
-  # Example list of heroes and maps
-heroes = ['Zuljin', 'Tracer', 'Anubarak', 'Tyrael', 'Fenix']
-maps = ['Braxis Holdout', 'Alterac Pass', 'Dragon Shire', 'Towers of Doom', 'Volskaya Foundry']
-
-# Create a connection to the SQLite database
-conn = sqlite3.connect('your_database.db')
-cursor = conn.cursor()
-
-# Construct the SQL query dynamically
-base_query = """
-SELECT 
-    game_map, 
-"""
-
-# Add each hero's winrate calculation to the query
-for hero in heroes:
-    base_query += f"""
-    IFNULL(SUM(CASE WHEN game_hero = '{hero}' THEN game_winner ELSE 0 END) / NULLIF(SUM(CASE WHEN game_hero = '{hero}' THEN 1 ELSE 0 END), 0), 0) AS {hero},
-    """
-
-# Remove the last comma
-base_query = base_query.rstrip(',') 
-
-# Add the rest of the query
-base_query += """
-FROM 
-    uniqueGames 
-WHERE 
-    game_mode = 'stormLeague' 
-"""
-
-# Add the maps condition dynamically
-if maps:
-    maps_str = ', '.join(f"'{map}'" for map in maps)
-    base_query += f"AND game_map IN ({maps_str}) "
-
-base_query += "GROUP BY game_map;"
-*/
-
-  // END NEW STUFF
-
   queryDatabaseAndSerializeResult(queryForHeatmap, 'queryForHeatmapResult.json');
 }
 
@@ -489,32 +335,68 @@ function resetDatabase()
   // read all files in the folder and build a collection
   const replays = fs.readdirSync(replayFilePath);
 
-  // use this to purge all records from said table to start over
-  queryDatabase("DELETE FROM uniqueGames");
+  const fileDB = new sqlite3.Database("./data/gameData_sqlite.db")
 
-  // use this to fill the uniqueGames table in the games database on localhost with
-  // replay data stored as JSON files found in the folder specified in data_path.cfg
-  populateDatabase(replays);
+  const parameters = [];
+  
+   // using db.each 
+  const resultSet = fileDB.all("DROP TABLE uniqueGames", parameters, (err, result) => {
+    // each row processed here
+    if(err)
+      {
+        console.error("ERROR: " + err);
+      }
+      else
+      {
+        console.log("Database reset successful. Initialising...");
+        
+      }
+
+      const newConnection = new sqlite3.Database("./data/gameData_sqlite.db");
+      const initializationString = `CREATE TABLE uniqueGames (game_id varchar(255),
+                                        game_timestamp varchar(255),
+                                        game_winner varchar(255),
+                                      game_mode varchar(255),
+                                        game_hero varchar(255),
+                                        game_map varchar(255),
+                                        game_players varchar(255)
+                                    );`;
+                          
+
+      newConnection.all(initializationString, parameters, (err, result) => {
+          // use this to fill the uniqueGames table in the games database on localhost with
+          // replay data stored as JSON files found in the folder specified in data_path.cfg
+          populateDatabase(replays);
+      });
+
+      newConnection.close();
+      
+  });
+
+  fileDB.close();  
 
 }
 
-// RESET DATABASE OR GENERATE DATA - for concurrency reasons, these need to be separate compilations
-const initialize = false;
-if(initialize)
+export async function main()
 {
-  resetDatabase();
-}
-else
-{
-  queryHeroWinrate(); // this should generate a queryForHeroStatsResponse.json that holds all heroes, their total wins, games and winrate using the queryForHeroStats query.
-  queryMapWinrate(); // this should generate a queryForMapStatsResponse.json that holds all maps, their total wins, games and winrate using the queryForMapStats query.
-  queryWinrateOverTime();
-  queryHeroPerformancePerMap();
+      // RESET DATABASE AND INITIALIZE DATA
 
-  queryRankedHeroes();
-  queryRankedMaps();
-  queryNestedMap();
-  queryPartyWinrate();
+      resetDatabase();
+
+      await sleep(5000);
+
+      queryHeroWinrate(); // this should generate a queryForHeroStatsResponse.json that holds all heroes, their total wins, games and winrate using the queryForHeroStats query.
+      queryMapWinrate(); // this should generate a queryForMapStatsResponse.json that holds all maps, their total wins, games and winrate using the queryForMapStats query.
+      queryWinrateOverTime();
+      queryHeroPerformancePerMap();
+
+      queryRankedHeroes();
+      queryRankedMaps();
+      queryNestedMap();
+      queryPartyWinrate();
+
+
 }
 
+main();
 

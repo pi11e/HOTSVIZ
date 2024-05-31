@@ -9,8 +9,7 @@ options and data to them.
 import Chart from 'chart.js/auto';
 import { create } from 'domain';
 import * as fs from'fs';
-import * as mysql from 'mysql';
-import * as util from 'util';
+
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
 
 import * as hotsdata from './hotsdata.js'
@@ -456,3 +455,8 @@ function calculateRGBA(winrate, gamesPlayed) {
   // Return the RGBA color string
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
+
+const resetButton = document.getElementById('db_reset');
+resetButton.addEventListener('click', () => {
+  console.log("button clicked!");
+})

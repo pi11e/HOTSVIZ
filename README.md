@@ -55,3 +55,4 @@ then navigate to localhost:1234
 
 - add dropdowns etc. to limit or switch visualization to specific heroes, players or other properties such as # of games played (only include stats for heroes that have x amount of games played)
 - find a way to scan for and add to database only the NEW replays (ie check replay folder, convert previously unknown replays to json, then populate DB and delete JSON?)
+- clean up hotsvis.js by providing convenience getters in hotsdata (model layer) to get Hero and Map winrates (as well as the combined WR of a hero on a map)
