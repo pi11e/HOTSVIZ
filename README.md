@@ -53,6 +53,20 @@ then navigate to localhost:1234
         - https://sqlitebrowser.org/dl/
         - https://www.npmjs.com/package/sqlite#installation
 
+- add slider to limit visualization to the last X number of ranked games (instead of always visualizing all matches)
 - add dropdowns etc. to limit or switch visualization to specific heroes, players or other properties such as # of games played (only include stats for heroes that have x amount of games played)
 - find a way to scan for and add to database only the NEW replays (ie check replay folder, convert previously unknown replays to json, then populate DB and delete JSON?)
 - clean up hotsvis.js by providing convenience getters in hotsdata (model layer) to get Hero and Map winrates (as well as the combined WR of a hero on a map)
+
+# INSTRUCTIONS as of 08/2024
+STEP 1:
+- compile & run program.cs 
+-- this processes existing replay files from the directory specified in that .cs file, turning them into JSON files
+STEP 2:
+- compile & run HOTSDB.js
+-- this loads replay JSON files into a local file database, resetting the database with the content of the directory specified in data.cfg 
+STEP 3:
+- execute "npm run dev"
+-- this launches a local webservice associated with the solution (see index.html) and 
+
+Now you can navigate to a localhost address to benefit from the stats visualization based on the database contents.

@@ -234,7 +234,10 @@ function populateDatabase(files)
 {
   for(const file of files)
     {
-      const fullPath = path.join(replayFilePath, file);
+      // check for JSON file
+      if(file.endsWith(".json"))
+      {
+        const fullPath = path.join(replayFilePath, file);
       try {
         const jsonData = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
         createRowFromJSON(jsonData);  
@@ -243,6 +246,9 @@ function populateDatabase(files)
         console.warn("Database population failed for replay " + fullPath +". Check replay integrity. Skipping file.")
         //console.log(error)  
       }
+      }
+
+      
       
     };
 

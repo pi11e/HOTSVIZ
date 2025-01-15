@@ -1,0 +1,15 @@
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\bin\Debug\net8.0\hotsSetup.exe
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\bin\Debug\net8.0\hotsSetup.deps.json
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\bin\Debug\net8.0\hotsSetup.runtimeconfig.json
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\bin\Debug\net8.0\hotsSetup.dll
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\bin\Debug\net8.0\hotsSetup.pdb
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\obj\Debug\net8.0\hotsSetup.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\obj\Debug\net8.0\hotsSetup.AssemblyInfoInputs.cache
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\obj\Debug\net8.0\hotsSetup.AssemblyInfo.cs
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\obj\Debug\net8.0\hotsSetup.csproj.CoreCompileInputs.cache
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\obj\Debug\net8.0\hotsSetup.sourcelink.json
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\obj\Debug\net8.0\hotsSetup.dll
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\obj\Debug\net8.0\refint\hotsSetup.dll
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\obj\Debug\net8.0\hotsSetup.pdb
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\obj\Debug\net8.0\hotsSetup.genruntimeconfig.cache
+C:\Users\darth\Documents\codeprojects\HOTSVIZ\hotsSetup\obj\Debug\net8.0\ref\hotsSetup.dll
