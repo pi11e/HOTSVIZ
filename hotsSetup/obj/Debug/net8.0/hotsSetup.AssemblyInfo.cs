@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("hotsSetup")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+25086e481e5f698d0dbb376f185279249b27de5a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+be854db5009bb5e002d430b4c8a75aae8bd9932f")]
 [assembly: System.Reflection.AssemblyProductAttribute("hotsSetup")]
 [assembly: System.Reflection.AssemblyTitleAttribute("hotsSetup")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

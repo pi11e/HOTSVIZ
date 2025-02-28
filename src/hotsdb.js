@@ -10,8 +10,8 @@
 
 
 var uniqueGamesJSON = [];
-
-const replayFilePath = fs.readFileSync("./data/data_path.cfg", "utf-8");
+const dataFolderPath = "./data/";
+const replayFilePath = fs.readFileSync(dataFolderPath + "data_path.cfg", "utf-8");
 
 
 const queryForHeroStats = "SELECT game_hero, COUNT(*) AS total_games, SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS total_wins, CAST(SUM(CASE WHEN game_winner = 1 THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*) AS win_rate FROM uniqueGames WHERE game_mode = 'stormLeague' GROUP BY game_hero ORDER BY total_games DESC LIMIT 0, 1000";
@@ -19,9 +19,9 @@ const queryForMapStats = "SELECT game_map, COUNT(*) AS total_games, SUM(CASE WHE
 const queryForRankedHeroes = "SELECT DISTINCT game_hero FROM uniqueGames WHERE game_mode = 'stormLeague' ORDER BY game_hero";
 const queryForRankedMaps = "SELECT DISTINCT game_map FROM uniqueGames WHERE game_mode = 'stormLeague' ORDER BY game_map";
 const queryForPartyWinrate = "SELECT game_winner, game_players FROM uniqueGames";
-const queryForHeatmap = fs.readFileSync('./data/heatmapquery.cfg', 'utf-8'); 
-const queryForLineChart = fs.readFileSync('./data/linechartquery.cfg', 'utf-8');
-const queryForNestedMap = fs.readFileSync('./data/nestedmapquery.cfg', 'utf-8');
+const queryForHeatmap = fs.readFileSync(dataFolderPath + 'heatmapquery.cfg', 'utf-8'); 
+const queryForLineChart = fs.readFileSync(dataFolderPath + 'linechartquery.cfg', 'utf-8');
+const queryForNestedMap = fs.readFileSync(dataFolderPath + 'nestedmapquery.cfg', 'utf-8');
 
 
 
@@ -33,7 +33,7 @@ function serializeQuery(queryResult, filename)
 
     // Step 2: Write JSON string as file of the given filename
     // filename expects something like 'abc.json'
-    const filepath = './data/'+filename;
+    const filepath = dataFolderPath+filename;
 
     fs.writeFileSync(filepath, JSON.stringify(queryResult));
 }
@@ -64,7 +64,7 @@ function handleResultset (err, result) {
 // new queryDatabase (using local sqlite file)
 async function queryDatabase(queryString)
 {
-  const fileDB = new sqlite3.Database("./data/gameData_sqlite.db")
+  const fileDB = new sqlite3.Database(dataFolderPath + "gameData_sqlite.db")
   fileDB.run('PRAGMA sjournal_mode = WAL;');
   const parameters = [];
   
@@ -97,7 +97,7 @@ async function queryDatabase(queryString)
 // NEW queryDatabaseAndSerializeResult (using sqlite local file)
 export async function queryDatabaseAndSerializeResult(queryString, filename)
 {
-  const fileDB = new sqlite3.Database("./data/gameData_sqlite.db")
+  const fileDB = new sqlite3.Database(dataFolderPath + "gameData_sqlite.db")
   
   const parameters = [];
   
@@ -341,7 +341,7 @@ function resetDatabase()
   // read all files in the folder and build a collection
   const replays = fs.readdirSync(replayFilePath);
 
-  const fileDB = new sqlite3.Database("./data/gameData_sqlite.db")
+  const fileDB = new sqlite3.Database(dataFolderPath + "gameData_sqlite.db")
 
   const parameters = [];
   
@@ -358,7 +358,7 @@ function resetDatabase()
         
       }
 
-      const newConnection = new sqlite3.Database("./data/gameData_sqlite.db");
+      const newConnection = new sqlite3.Database(dataFolderPath + "gameData_sqlite.db");
       const initializationString = `CREATE TABLE uniqueGames (game_id varchar(255),
                                         game_timestamp varchar(255),
                                         game_winner varchar(255),

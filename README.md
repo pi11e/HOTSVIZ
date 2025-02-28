@@ -69,4 +69,4 @@ STEP 3:
 - execute "npm run dev"
 -- this launches a local webservice associated with the solution (see index.html) and 
 
-Now you can navigate to a localhost address to benefit from the stats visualization based on the database contents.
+Now you can navigate to localhost:1234 to benefit from the stats visualization based on the database contents.

@@ -17,9 +17,31 @@ using System.Diagnostics;
 // processReplay = dotnet heroes-decode -get-json --replay-path "..." > "...".json
 Process.Start("cmd", "dotnet tool install --global HeroesDecode");
 
-string folderPath = "C:\\Users\\darth\\Documents\\Heroes of the Storm\\Accounts\\75534426\\2-Hero-1-1919475\\Replays\\Multiplayer";
+//string folderPath = "C:\\Users\\darth\\Documents\\Heroes of the Storm\\Accounts\\75534426\\2-Hero-1-1919475\\Replays\\Multiplayer";
+
+string relativeConfigurationFilePath = "./data/data_path.cfg";
+string folderPath = ""; 
+
+string _debugCurrentDirectory = Directory.GetCurrentDirectory();
+Console.WriteLine("current DIR " + _debugCurrentDirectory);
+
+try{
+    folderPath = File.ReadAllText(relativeConfigurationFilePath);
+}
+catch (System.Exception)
+{
+    Console.WriteLine("ERROR: directory or configuration file not found");
+    Console.WriteLine(relativeConfigurationFilePath);
+}
+
+
+if(!String.IsNullOrEmpty(folderPath))
+{
+    Console.WriteLine("Looking for new replays in folder");
+Console.WriteLine(folderPath);
 
 string[] fileNames = Directory.GetFiles(folderPath);
+int replaysProcessed = 0;
 foreach (var replayFile in fileNames)
 {
     bool isStormReplay = replayFile.EndsWith(".StormReplay");
@@ -31,12 +53,21 @@ foreach (var replayFile in fileNames)
         Process.Start("cmd", command);
 
         Console.WriteLine("processing replay file " + replayFile);
+        replaysProcessed++;
     }
     
 }
+
+Console.WriteLine("Replay processing completed.");
+Console.WriteLine(fileNames.Length + " replays found.");
+Console.WriteLine(replaysProcessed + " new replays processed.");
+
+return;
 
 //string filePath = "2024-06-16 12.28.34 Sky Temple.StormReplay\"";
 //string replayPath = folderPath + filePath;
 //string command = "/C dotnet heroes-decode get-json --replay-path " + replayPath + " > " + replayPath + ".json";
 //Console.WriteLine(command);
 //Process.Start("cmd", command); // this works!
+}
+
