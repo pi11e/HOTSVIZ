@@ -64,10 +64,6 @@ Console.WriteLine(replaysProcessed + " new replays processed.");
 
 return;
 
-//string filePath = "2024-06-16 12.28.34 Sky Temple.StormReplay\"";
-//string replayPath = folderPath + filePath;
-//string command = "/C dotnet heroes-decode get-json --replay-path " + replayPath + " > " + replayPath + ".json";
-//Console.WriteLine(command);
-//Process.Start("cmd", command); // this works!
+
 }
 
